@@ -1,0 +1,119 @@
+import { ipcMain, clipboard, nativeImage, BrowserWindow } from 'electron'
+import { exec, execFile } from 'child_process'
+import { readFileSync } from 'fs'
+import {
+  listClips,
+  searchClips,
+  getClip,
+  deleteClip,
+  setPinned,
+  clearAll,
+  type ClipRecord
+} from './database'
+import { markSelfWrite } from './clipboard-watcher'
+
+export interface PasteResult {
+  ok: boolean
+}
+
+function writeClipToClipboard(record: ClipRecord): void {
+  if (record.type === 'image' && record.image_path) {
+    const img = nativeImage.createFromBuffer(readFileSync(record.image_path))
+    clipboard.writeImage(img)
+  } else if (record.type === 'richtext') {
+    clipboard.write({
+      text: record.preview || record.content.replace(/<[^>]+>/g, ' '),
+      html: record.content,
+      rtf: record.rtf ?? undefined
+    })
+  } else {
+    clipboard.writeText(record.content)
+  }
+
+  // Pre-arm the watcher with the hash we just wrote instead of reading the
+  // clipboard back: on macOS the pasteboard updates asynchronously, so an
+  // immediate read often returns stale content and lets the paste re-register
+  // as a brand new clip.
+  markSelfWrite(record.hash)
+}
+
+// AppleScript bundle identifiers are a strict charset; reject anything else to
+// avoid AppleScript-level `&`-injection via CFBundleIdentifier contents.
+const SAFE_BUNDLE_ID = /^[A-Za-z0-9.\-]{1,256}$/
+
+function simulatePaste(previousAppBundleId?: string | null): void {
+  if (process.platform === 'darwin') {
+    // The bundle id is passed as an argv string literal (via `on run argv`), so
+    // it can never be parsed as AppleScript source.
+    const safeBundleId =
+      previousAppBundleId && SAFE_BUNDLE_ID.test(previousAppBundleId) ? previousAppBundleId : ''
+    const script = safeBundleId
+      ? 'on run argv\n' +
+        '  set bundleId to item 1 of argv\n' +
+        '  tell application id bundleId to activate\n' +
+        '  delay 0.05\n' +
+        '  tell application "System Events" to keystroke "v" using command down\n' +
+        'end run'
+      : 'tell application "System Events" to keystroke "v" using command down'
+    const args = safeBundleId ? ['-e', script, safeBundleId] : ['-e', script]
+    execFile('osascript', args, (err) => {
+      if (err) console.error('[paste] osascript error', err)
+    })
+  } else if (process.platform === 'win32') {
+    exec(
+      'powershell -NoProfile -Command "(New-Object -ComObject WScript.Shell).SendKeys(\'^v\')"',
+      (err) => {
+        if (err) console.error('[paste] SendKeys error', err)
+      }
+    )
+  } else {
+    exec('xdotool key --clearmodifiers ctrl+v', (err) => {
+      if (err) console.error('[paste] xdotool error', err)
+    })
+  }
+}
+
+export function registerIpcHandlers(
+  getWindow: () => BrowserWindow | null,
+  getPreviousAppBundleId: () => string | null = () => null
+): void {
+  ipcMain.handle('clips:list', () => listClips())
+
+  ipcMain.handle('clips:search', (_e, query: string) => {
+    if (!query || !query.trim()) return listClips()
+    return searchClips(query.trim())
+  })
+
+  ipcMain.handle('clips:delete', (_e, id: number) => {
+    deleteClip(id)
+    return true
+  })
+
+  ipcMain.handle('clips:pin', (_e, id: number, pinned: boolean) => {
+    setPinned(id, pinned)
+    return true
+  })
+
+  ipcMain.handle('clips:clear', () => {
+    clearAll()
+    return true
+  })
+
+  ipcMain.handle('clips:paste', (_e, id: number) => {
+    const record = getClip(id)
+    if (!record) return { ok: false }
+    writeClipToClipboard(record)
+    const previousAppBundleId = getPreviousAppBundleId()
+    const win = getWindow()
+    if (win) win.hide()
+    // Reactivate the previous app and send Cmd+V. The activate step handles focus,
+    // so a short delay is enough to let our window get out of the way.
+    setTimeout(() => simulatePaste(previousAppBundleId), 120)
+    return { ok: true }
+  })
+
+  ipcMain.handle('window:hide', () => {
+    getWindow()?.hide()
+    return true
+  })
+}
