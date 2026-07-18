@@ -19,15 +19,15 @@ const PreviewModal = memo(function PreviewModal({ record, onClose }: Props): JSX
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center vibrancy-overlay"
       onClick={handleBackdropClick}
     >
-      <div className="flex max-h-[90vh] w-[600px] flex-col rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-800">Xem trước</h2>
+      <div className="flex max-h-[90vh] w-[600px] flex-col rounded-2xl vibrancy-modal">
+        <div className="flex items-center justify-between border-b border-theme-default px-5 py-4">
+          <h2 className="text-sm font-semibold text-theme-primary">Xem trước</h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-black/5 hover:text-slate-600"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
           >
             ✕
           </button>
@@ -43,12 +43,12 @@ const PreviewModal = memo(function PreviewModal({ record, onClose }: Props): JSX
           )}
           {record.type === 'richtext' && record.content && (
             <div
-              className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-700"
+              className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-theme-primary"
               dangerouslySetInnerHTML={{ __html: record.content }}
             />
           )}
           {(record.type === 'text' || record.type === 'link') && (
-            <pre className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-700">
+            <pre className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-theme-primary">
               {record.content}
             </pre>
           )}

@@ -36,8 +36,8 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
   }, [handleInput])
 
   return (
-    <div className="rounded-lg border border-black/10 overflow-hidden">
-      <div className="flex items-center gap-0.5 border-b border-black/10 bg-slate-50 px-2 py-1.5">
+    <div className="rounded-lg border border-theme-default overflow-hidden">
+      <div className="flex items-center gap-0.5 border-b border-theme-default bg-theme-card px-2 py-1.5">
         {TOOLBAR_BUTTONS.map(({ cmd, label, title }) => (
           <button
             key={cmd}
@@ -47,12 +47,12 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
               execCommand(cmd)
             }}
             title={title}
-            className="flex h-7 w-8 items-center justify-center rounded text-sm font-medium text-slate-600 hover:bg-black/5 hover:text-slate-900"
+            className="flex h-7 w-8 items-center justify-center rounded text-sm font-medium text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
           >
             {label}
           </button>
         ))}
-        <div className="mx-1 h-5 w-px bg-black/10" />
+        <div className="mx-1 h-5 w-px bg-theme-default" />
         <button
           type="button"
           onMouseDown={(e) => {
@@ -60,7 +60,7 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
             execCommand('removeFormat')
           }}
           title="Xóa định dạng"
-          className="flex h-7 items-center justify-center rounded px-2 text-xs font-medium text-slate-500 hover:bg-black/5 hover:text-slate-700"
+          className="flex h-7 items-center justify-center rounded px-2 text-xs font-medium text-theme-tertiary hover:bg-black/5 hover:text-theme-secondary"
         >
           Clear
         </button>
@@ -71,7 +71,7 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
         suppressContentEditableWarning
         onInput={handleInput}
         data-placeholder={placeholder}
-        className="min-h-[120px] w-full px-3 py-2.5 text-sm text-slate-700 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400"
+        className="min-h-[120px] w-full px-3 py-2.5 text-sm text-theme-primary outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-theme-tertiary"
         style={{ lineHeight: 1.6 }}
       />
     </div>

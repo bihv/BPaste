@@ -17,6 +17,15 @@ export interface ClipRecord {
   created_at: number
   source_name: string | null
   source_icon: string | null
+  pinboard_id: number | null
+}
+
+export interface Pinboard {
+  id: number
+  name: string
+  color: string
+  created_at: number
+  sort_order: number
 }
 
 export interface NewClip {
@@ -28,6 +37,7 @@ export interface NewClip {
   hash: string
   source_name?: string | null
   source_icon?: string | null
+  pinboard_id?: number | null
 }
 
 const MAX_ITEMS = 500
@@ -40,6 +50,13 @@ export function initDatabase(): void {
   db = new Database(join(dir, 'bpaste.db'))
   db.pragma('journal_mode = WAL')
   db.exec(`
+    CREATE TABLE IF NOT EXISTS pinboards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL DEFAULT '#6366f1',
+      created_at INTEGER NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS clips (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
@@ -51,11 +68,27 @@ export function initDatabase(): void {
       pinned INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       source_name TEXT,
-      source_icon TEXT
+      source_icon TEXT,
+      pinboard_id INTEGER,
+      FOREIGN KEY (pinboard_id) REFERENCES pinboards(id) ON DELETE SET NULL
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_clips_hash ON clips(hash);
     CREATE INDEX IF NOT EXISTS idx_clips_created ON clips(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_clips_pinboard ON clips(pinboard_id);
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `)
+
+  // Initialize default settings
+  const defaults: Record<string, string> = {
+    theme: 'system'
+  }
+  const insertStmt = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)')
+  for (const [key, value] of Object.entries(defaults)) {
+    insertStmt.run(key, value)
+  }
 }
 
 export function upsertClip(clip: NewClip): { record: ClipRecord; isNew: boolean } {
@@ -152,4 +185,73 @@ function pruneOld(): void {
        SELECT id FROM clips WHERE pinned = 0 ORDER BY created_at DESC LIMIT ?
      )`
   ).run(MAX_ITEMS)
+}
+
+// Pinboard functions
+export function listPinboards(): Pinboard[] {
+  return db
+    .prepare('SELECT * FROM pinboards ORDER BY sort_order ASC, created_at DESC')
+    .all() as Pinboard[]
+}
+
+export function createPinboard(name: string, color: string): Pinboard {
+  const now = Date.now()
+  const maxOrder = db.prepare('SELECT MAX(sort_order) as max FROM pinboards').get() as { max: number | null }
+  const sortOrder = (maxOrder?.max ?? -1) + 1
+
+  const info = db
+    .prepare('INSERT INTO pinboards (name, color, created_at, sort_order) VALUES (?, ?, ?, ?)')
+    .run(name, color, now, sortOrder)
+
+  return db.prepare('SELECT * FROM pinboards WHERE id = ?').get(info.lastInsertRowid) as Pinboard
+}
+
+export function updatePinboard(id: number, name: string, color: string): Pinboard | undefined {
+  db.prepare('UPDATE pinboards SET name = ?, color = ? WHERE id = ?').run(name, color, id)
+  return db.prepare('SELECT * FROM pinboards WHERE id = ?').get(id) as Pinboard | undefined
+}
+
+export function deletePinboard(id: number): void {
+  db.prepare('DELETE FROM pinboards WHERE id = ?').run(id)
+}
+
+export function reorderPinboards(orderedIds: number[]): void {
+  const stmt = db.prepare('UPDATE pinboards SET sort_order = ? WHERE id = ?')
+  orderedIds.forEach((id, index) => {
+    stmt.run(index, id)
+  })
+}
+
+export function addClipToPinboard(clipId: number, pinboardId: number | null): void {
+  if (pinboardId === null) {
+    db.prepare('UPDATE clips SET pinboard_id = NULL WHERE id = ?').run(clipId)
+  } else {
+    db.prepare('UPDATE clips SET pinboard_id = ? WHERE id = ?').run(pinboardId, clipId)
+  }
+}
+
+export function getClipsByPinboard(pinboardId: number | null, limit = 200): ClipRecord[] {
+  if (pinboardId === null) {
+    return db
+      .prepare('SELECT * FROM clips WHERE pinboard_id IS NULL ORDER BY pinned DESC, created_at DESC LIMIT ?')
+      .all(limit) as ClipRecord[]
+  }
+  return db
+    .prepare('SELECT * FROM clips WHERE pinboard_id = ? ORDER BY pinned DESC, created_at DESC LIMIT ?')
+    .all(pinboardId, limit) as ClipRecord[]
+}
+
+// Settings functions
+export function getSetting(key: string): string | null {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined
+  return row?.value ?? null
+}
+
+export function setSetting(key: string, value: string): void {
+  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value)
+}
+
+export function getAllSettings(): Record<string, string> {
+  const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[]
+  return Object.fromEntries(rows.map(r => [r.key, r.value]))
 }

@@ -1,4 +1,4 @@
-import { ipcMain, clipboard, nativeImage, BrowserWindow, app } from 'electron'
+import { ipcMain, clipboard, nativeImage, BrowserWindow, app, Menu, MenuItemConstructorOptions } from 'electron'
 import { exec, execFile } from 'child_process'
 import { readFileSync } from 'fs'
 import { join, basename, isAbsolute, normalize } from 'path'
@@ -11,7 +11,18 @@ import {
   setPinned,
   updateClip,
   clearAll,
-  type ClipRecord
+  listPinboards,
+  createPinboard,
+  updatePinboard,
+  deletePinboard,
+  reorderPinboards,
+  addClipToPinboard,
+  getClipsByPinboard,
+  getSetting,
+  setSetting,
+  getAllSettings,
+  type ClipRecord,
+  type Pinboard
 } from './database'
 import { markSelfWrite } from './clipboard-watcher'
 
@@ -169,5 +180,141 @@ export function registerIpcHandlers(
 
   ipcMain.handle('rtf:sanitize', (_e, rtf: string) => {
     return DOMPurify.sanitize(rtf, { USE_PROFILES: { html: true } })
+  })
+
+  // Pinboard handlers
+  ipcMain.handle('pinboards:list', () => listPinboards())
+
+  ipcMain.handle('pinboards:create', (_e, name: string, color: string) => {
+    return createPinboard(name, color)
+  })
+
+  ipcMain.handle('pinboards:update', (_e, id: number, name: string, color: string) => {
+    return updatePinboard(id, name, color) ?? null
+  })
+
+  ipcMain.handle('pinboards:delete', (_e, id: number) => {
+    deletePinboard(id)
+    return true
+  })
+
+  ipcMain.handle('pinboards:reorder', (_e, orderedIds: number[]) => {
+    reorderPinboards(orderedIds)
+    return true
+  })
+
+  ipcMain.handle('pinboards:addClip', (_e, clipId: number, pinboardId: number | null) => {
+    addClipToPinboard(clipId, pinboardId)
+    return true
+  })
+
+  ipcMain.handle('pinboards:clips', (_e, pinboardId: number | null) => {
+    return getClipsByPinboard(pinboardId)
+  })
+
+  ipcMain.handle('contextMenu:showClip', (_e, clip: ClipRecord, pinboards: Pinboard[]) => {
+    const win = getWindow()
+    if (!win) return
+
+    const menuItems: MenuItemConstructorOptions[] = []
+
+    if (clip.type === 'text' || clip.type === 'richtext') {
+      menuItems.push({
+        label: 'Xem trước',
+        click: () => win.webContents.send('contextMenuAction', { action: 'preview', clip })
+      })
+    }
+
+    if (clip.type === 'link' || clip.type === 'richtext') {
+      menuItems.push({
+        label: 'Dán text thuần',
+        click: () => win.webContents.send('contextMenuAction', { action: 'pastePlain', clip })
+      })
+    }
+
+    if (clip.type !== 'image') {
+      menuItems.push({
+        label: 'Chỉnh sửa',
+        click: () => win.webContents.send('contextMenuAction', { action: 'edit', clip })
+      })
+    }
+
+    if (pinboards.length > 0) {
+      const pinboardSubmenu: MenuItemConstructorOptions[] = []
+
+      if (clip.pinboard_id !== null) {
+        pinboardSubmenu.push({
+          label: 'Xóa khỏi Pinboard',
+          click: () => win.webContents.send('contextMenuAction', { action: 'addToPinboard', clip, pinboardId: null })
+        })
+        pinboardSubmenu.push({ type: 'separator' })
+      }
+
+      pinboards.forEach(pb => {
+        pinboardSubmenu.push({
+          label: pb.name,
+          type: 'checkbox',
+          checked: clip.pinboard_id === pb.id,
+          click: () => win.webContents.send('contextMenuAction', { action: 'addToPinboard', clip, pinboardId: pb.id })
+        })
+      })
+
+      menuItems.push({
+        label: 'Pinboard',
+        submenu: pinboardSubmenu
+      })
+    } else {
+      menuItems.push({
+        label: 'Pinboard',
+        submenu: [{ label: 'Chưa có pinboard', enabled: false }]
+      })
+    }
+
+    menuItems.push({
+      label: clip.pinned === 1 ? 'Bỏ ghim' : 'Ghim',
+      click: () => win.webContents.send('contextMenuAction', { action: 'togglePin', clip })
+    })
+
+    menuItems.push({ type: 'separator' })
+
+    menuItems.push({
+      label: 'Xóa',
+      click: () => win.webContents.send('contextMenuAction', { action: 'delete', clip })
+    })
+
+    const menu = Menu.buildFromTemplate(menuItems)
+    menu.popup({ window: win })
+  })
+
+  ipcMain.handle('contextMenu:showPinboard', (_e, pinboard: Pinboard) => {
+    const win = getWindow()
+    if (!win) return
+
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Đổi tên',
+        click: () => win.webContents.send('pinboardContextMenuAction', { action: 'rename', pinboard })
+      },
+      { type: 'separator' },
+      {
+        label: 'Xóa',
+        click: () => win.webContents.send('pinboardContextMenuAction', { action: 'delete', pinboard })
+      }
+    ])
+    menu.popup({ window: win })
+  })
+
+  // Settings handlers
+  ipcMain.handle('settings:get', (_e, key: string) => {
+    return getSetting(key)
+  })
+
+  ipcMain.handle('settings:set', (_e, key: string, value: string) => {
+    setSetting(key, value)
+    return true
+  })
+
+  ipcMain.handle('settings:all', () => {
+    return getAllSettings()
   })
 }

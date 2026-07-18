@@ -38,16 +38,16 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center vibrancy-overlay"
       onClick={handleBackdropClick}
     >
-      <div className="flex max-h-[90vh] w-[600px] flex-col rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-800">Chỉnh sửa</h2>
+      <div className="flex max-h-[90vh] w-[600px] flex-col rounded-2xl vibrancy-modal">
+        <div className="flex items-center justify-between border-b border-theme-default px-5 py-4">
+          <h2 className="text-sm font-semibold text-theme-primary">Chỉnh sửa</h2>
           <div className="flex items-center gap-1">
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-black/5 hover:text-slate-600"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
               title="Hủy"
             >
               ✕
@@ -55,7 +55,7 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
             {!isImage && (
               <button
                 onClick={handleSave}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-white hover:opacity-90"
                 title="Lưu"
               >
                 ✓
@@ -66,7 +66,7 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
 
         <div className="flex-1 overflow-auto p-5">
           {isImage ? (
-            <p className="text-sm text-slate-500">Không thể chỉnh sửa hình ảnh.</p>
+            <p className="text-sm text-theme-secondary">Không thể chỉnh sửa hình ảnh.</p>
           ) : isRichText ? (
             <RichTextEditor
               value={content}
@@ -77,7 +77,7 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="h-full min-h-[300px] w-full rounded-lg border border-black/10 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="h-full min-h-[300px] w-full rounded-lg border border-theme-default bg-theme-card px-3 py-2 text-sm text-theme-primary focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               autoFocus
             />
           )}

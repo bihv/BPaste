@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ClipRecord, FilterType } from '../types'
+import type { ClipRecord, FilterType, Pinboard } from '../types'
+
+console.log('[useClipboard] Module loaded')
 
 export function useClipboard(): {
   clips: ClipRecord[]
@@ -15,27 +17,65 @@ export function useClipboard(): {
   togglePin: (record: ClipRecord) => Promise<void>
   clearAll: () => Promise<void>
   reload: () => Promise<void>
+  pinboards: Pinboard[]
+  selectedPinboardId: number | null
+  setSelectedPinboard: (id: number | null) => void
+  createPinboard: (name: string, color: string) => Promise<void>
+  updatePinboard: (id: number, name: string, color: string) => Promise<void>
+  deletePinboard: (id: number) => Promise<void>
+  addToPinboard: (clipId: number, pinboardId: number | null) => Promise<void>
+  reloadPinboards: () => Promise<void>
 } {
+  console.log('[useClipboard] Hook called')
   const [clips, setClips] = useState<ClipRecord[]>([])
+  const [pinboards, setPinboards] = useState<Pinboard[]>([])
+  const [selectedPinboardId, setSelectedPinboardId] = useState<number | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
 
+  console.log('[useClipboard] State initialized, clips:', clips.length, 'pinboards:', pinboards.length)
+
+  const reloadPinboards = useCallback(async () => {
+    console.log('[useClipboard] reloadPinboards called')
+    const data = await window.bpaste.listPinboards()
+    console.log('[useClipboard] pinboards loaded:', data.length)
+    setPinboards(data)
+  }, [])
+
   const reload = useCallback(async () => {
-    const data = query.trim() ? await window.bpaste.search(query) : await window.bpaste.list()
+    console.log('[useClipboard] reload called, query:', query, 'selectedPinboardId:', selectedPinboardId)
+    let data: ClipRecord[]
+    if (query.trim()) {
+      data = await window.bpaste.search(query)
+    } else if (selectedPinboardId !== null) {
+      data = await window.bpaste.getPinboardClips(selectedPinboardId)
+    } else {
+      data = await window.bpaste.list()
+    }
+    console.log('[useClipboard] clips loaded:', data.length)
     setClips(data)
-  }, [query])
+  }, [query, selectedPinboardId])
 
   useEffect(() => {
+    console.log('[useClipboard] Effect: calling reloadPinboards')
+    void reloadPinboards()
+  }, [reloadPinboards])
+
+  useEffect(() => {
+    console.log('[useClipboard] Effect: calling reload')
     void reload()
   }, [reload])
 
   useEffect(() => {
     const offChanged = window.bpaste.onChanged(() => {
+      console.log('[useClipboard] onChanged triggered')
       void reload()
     })
     const offShown = window.bpaste.onWindowShown(() => {
+      console.log('[useClipboard] onWindowShown triggered')
       setQuery('')
       setFilter('all')
+      setSelectedPinboardId(null)
       void reload()
     })
     return () => {
@@ -43,6 +83,10 @@ export function useClipboard(): {
       offShown()
     }
   }, [reload])
+
+  const setSelectedPinboard = useCallback((id: number | null) => {
+    setSelectedPinboardId(id)
+  }, [])
 
   const filtered = useMemo(() => {
     if (filter === 'all') return clips
@@ -89,6 +133,38 @@ export function useClipboard(): {
     await reload()
   }, [reload])
 
+  const createPinboard = useCallback(
+    async (name: string, color: string) => {
+      await window.bpaste.createPinboard(name, color)
+      await reloadPinboards()
+    },
+    [reloadPinboards]
+  )
+
+  const updatePinboard = useCallback(
+    async (id: number, name: string, color: string) => {
+      await window.bpaste.updatePinboard(id, name, color)
+      await reloadPinboards()
+    },
+    [reloadPinboards]
+  )
+
+  const deletePinboard = useCallback(
+    async (id: number) => {
+      await window.bpaste.deletePinboard(id)
+      await reloadPinboards()
+    },
+    [reloadPinboards]
+  )
+
+  const addToPinboard = useCallback(
+    async (clipId: number, pinboardId: number | null) => {
+      await window.bpaste.addToPinboard(clipId, pinboardId)
+      await reload()
+    },
+    [reload]
+  )
+
   return {
     clips,
     filtered,
@@ -102,6 +178,14 @@ export function useClipboard(): {
     remove,
     togglePin,
     clearAll,
-    reload
+    reload,
+    pinboards,
+    selectedPinboardId,
+    setSelectedPinboard,
+    createPinboard,
+    updatePinboard,
+    deletePinboard,
+    addToPinboard,
+    reloadPinboards
   }
 }

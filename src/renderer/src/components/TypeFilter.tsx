@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import type { FilterType } from '../types'
 
-const FILTERS: { id: FilterType; label: string; types?: ClipType[] }[] = [
+const FILTERS: { id: FilterType; label: string; types?: string[] }[] = [
   { id: 'all', label: 'Tất cả' },
   { id: 'text', label: 'Văn bản', types: ['text', 'richtext'] },
   { id: 'link', label: 'Liên kết', types: ['link'] },
@@ -22,8 +22,8 @@ export default function TypeFilter({ value, onChange }: Props): JSX.Element {
           onClick={() => onChange(f.id)}
           className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
             value === f.id
-              ? 'bg-blue-500 text-white shadow-sm'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              ? 'bg-accent text-white shadow-sm'
+              : 'text-theme-secondary hover:bg-black/5 hover:text-theme-primary'
           }`}
         >
           {f.label}

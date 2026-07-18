@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, memo } from 'react'
+import { useState, useEffect, useMemo, memo, useCallback } from 'react'
 import type { JSX } from 'react'
 import type { ClipRecord } from '../types'
 
@@ -115,7 +115,8 @@ interface Props {
   onPaste: () => void
   onTogglePin: () => void
   onDelete: () => void
-  onContextMenu: (e: React.MouseEvent) => void
+  onContextMenu?: (e: React.MouseEvent) => void
+  onContextMenuAction?: (clip: ClipRecord) => (e: React.MouseEvent) => void
 }
 
 function timeAgo(ts: number): string {
@@ -193,20 +194,20 @@ const CardBody = memo(function CardBody({ record }: { record: ClipRecord }): JSX
   if (record.type === 'link') {
     return (
       <div className="flex flex-col gap-1">
-        <span className="break-all text-[13px] font-medium text-blue-500">{record.content}</span>
+        <span className="break-all text-[13px] font-medium text-accent">{record.content}</span>
       </div>
     )
   }
   if (record.type === 'richtext' && rtfHtml) {
     return (
       <div
-        className="whitespace-pre-wrap break-words text-[13px] leading-snug text-slate-700"
+        className="whitespace-pre-wrap break-words text-[13px] leading-snug text-theme-primary"
         dangerouslySetInnerHTML={{ __html: rtfHtml }}
       />
     )
   }
   return (
-    <p className="whitespace-pre-wrap break-words text-[13px] leading-snug text-slate-700">
+    <p className="whitespace-pre-wrap break-words text-[13px] leading-snug text-theme-primary">
       {record.preview || record.content}
     </p>
   )
@@ -217,12 +218,24 @@ const ClipCard = memo(function ClipCard({
   active,
   onSelect,
   onPaste,
-  onTogglePin,
-  onDelete,
-  onContextMenu
+  onTogglePin: _onTogglePin,
+  onDelete: _onDelete,
+  onContextMenu,
+  onContextMenuAction
 }: Props): JSX.Element {
   const iconDataUrl = useIconUrl(record.source_icon)
   const dominantColor = useDominantColor(record.source_icon, iconDataUrl)
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      if (onContextMenuAction) {
+        onContextMenuAction(record)(e)
+      } else if (onContextMenu) {
+        onContextMenu(e)
+      }
+    },
+    [onContextMenu, onContextMenuAction, record]
+  )
 
   const headerBg = useMemo(() => {
     if (!dominantColor) return '#f0f2f5'
@@ -246,11 +259,10 @@ const ClipCard = memo(function ClipCard({
     <div
       onClick={onPaste}
       onMouseEnter={onSelect}
-      onContextMenu={onContextMenu}
-      className={`relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover ${
-        active ? 'shadow-cardActive ring-2 ring-blue-500/50' : ''
+      onContextMenu={handleContextMenu}
+      className={`relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/10 bg-white/80 shadow-card backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover vibrancy-card ${
+        active ? 'shadow-cardActive ring-2 ring-accent/50' : ''
       }`}
-      role="menuitem"
     >
       <div
         className="relative flex h-14 items-center gap-2.5 border-b border-black/5 px-3"
@@ -285,6 +297,9 @@ const ClipCard = memo(function ClipCard({
         </div>
         {record.pinned === 1 && (
           <span className="text-[12px] text-amber-500">★</span>
+        )}
+        {record.pinboard_id !== null && (
+          <span className="text-[12px] text-indigo-500">📌</span>
         )}
       </div>
 
