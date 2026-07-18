@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { join } from 'path'
 import { mkdirSync } from 'fs'
 
-export type ClipType = 'text' | 'link' | 'image'
+export type ClipType = 'text' | 'link' | 'image' | 'richtext'
 
 export interface ClipRecord {
   id: number
@@ -126,6 +126,7 @@ export function getClip(id: number): ClipRecord | undefined {
 export function deleteClip(id: number): ClipRecord | undefined {
   const record = getClip(id)
   db.prepare('DELETE FROM clips WHERE id = ?').run(id)
+  db.exec('VACUUM')
   return record
 }
 
@@ -136,6 +137,7 @@ export function setPinned(id: number, pinned: boolean): void {
 export function clearAll(): ClipRecord[] {
   const removed = db.prepare('SELECT * FROM clips WHERE pinned = 0').all() as ClipRecord[]
   db.prepare('DELETE FROM clips WHERE pinned = 0').run()
+  db.exec('VACUUM')
   return removed
 }
 

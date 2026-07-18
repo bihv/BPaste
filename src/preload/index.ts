@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 export interface ClipRecord {
   id: number
-  type: 'text' | 'link' | 'image'
+  type: 'text' | 'link' | 'image' | 'richtext'
   content: string
   rtf: string | null
   image_path: string | null
@@ -23,6 +23,8 @@ const api = {
   clear: (): Promise<boolean> => ipcRenderer.invoke('clips:clear'),
   hide: (): Promise<void> => ipcRenderer.invoke('window:hide'),
   readIcon: (filePath: string): Promise<string | null> => ipcRenderer.invoke('icons:read', filePath),
+  readImage: (filePath: string): Promise<string | null> => ipcRenderer.invoke('images:read', filePath),
+  sanitizeRtf: (rtf: string): Promise<string> => ipcRenderer.invoke('rtf:sanitize', rtf),
   onChanged: (cb: (payload: { record: ClipRecord; isNew: boolean }) => void): (() => void) => {
     const handler = (_e: unknown, payload: { record: ClipRecord; isNew: boolean }): void =>
       cb(payload)

@@ -19,8 +19,13 @@ function sha256(input: string | Buffer): string {
   return createHash('sha256').update(input).digest('hex')
 }
 
-function classify(text: string, _html: string): ClipType {
+function hasRichFormatting(html: string): boolean {
+  return /<(b|strong|i|em|u|ins|s|strike|span|font|mark|sub|sup|small)\b[^>]*>/i.test(html)
+}
+
+function classify(text: string, html: string): ClipType {
   if (text && URL_REGEX.test(text.trim())) return 'link'
+  if (hasRichFormatting(html)) return 'richtext'
   return 'text'
 }
 

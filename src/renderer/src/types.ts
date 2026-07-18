@@ -1,4 +1,4 @@
-export type ClipType = 'text' | 'link' | 'image'
+export type ClipType = 'text' | 'link' | 'image' | 'richtext'
 
 export interface ClipRecord {
   id: number
@@ -14,4 +14,4 @@ export interface ClipRecord {
   source_icon: string | null
 }
 
-export type FilterType = 'all' | ClipType
+export type FilterType = 'all' | 'text' | 'link' | 'image'

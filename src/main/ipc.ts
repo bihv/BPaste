@@ -1,7 +1,8 @@
 import { ipcMain, clipboard, nativeImage, BrowserWindow, app } from 'electron'
 import { exec, execFile } from 'child_process'
 import { readFileSync } from 'fs'
-import { join, sep, basename } from 'path'
+import { join, basename, isAbsolute, normalize } from 'path'
+import { createRequire } from 'module'
 import {
   listClips,
   searchClips,
@@ -12,6 +13,9 @@ import {
   type ClipRecord
 } from './database'
 import { markSelfWrite } from './clipboard-watcher'
+
+const require = createRequire(import.meta.url)
+const DOMPurify = require('dompurify')
 
 export function readFileAsDataUrl(filePath: string): string | null {
   try {
@@ -32,10 +36,10 @@ function writeClipToClipboard(record: ClipRecord): void {
   if (record.type === 'image' && record.image_path) {
     const img = nativeImage.createFromBuffer(readFileSync(record.image_path))
     clipboard.writeImage(img)
-  } else if (record.type === 'richtext') {
+  } else if (record.type === 'richtext' || record.type === 'link') {
     clipboard.write({
       text: record.preview || record.content.replace(/<[^>]+>/g, ' '),
-      html: record.content,
+      html: record.type === 'richtext' ? record.content : undefined,
       rtf: record.rtf ?? undefined
     })
   } else {
@@ -128,5 +132,15 @@ export function registerIpcHandlers(
     const safeName = basename(filePath)
     const requestedPath = join(iconDir, safeName)
     return readFileAsDataUrl(requestedPath)
+  })
+
+  ipcMain.handle('images:read', (_e, filePath: string) => {
+    const normalized = normalize(filePath)
+    if (!isAbsolute(normalized)) return null
+    return readFileAsDataUrl(normalized)
+  })
+
+  ipcMain.handle('rtf:sanitize', (_e, rtf: string) => {
+    return DOMPurify.sanitize(rtf, { USE_PROFILES: { html: true } })
   })
 }

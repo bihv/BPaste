@@ -1,6 +1,5 @@
-import { forwardRef, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import type { JSX } from 'react'
-import DOMPurify from 'dompurify'
 import type { ClipRecord } from '../types'
 
 const MAX_COLOR_CACHE_SIZE = 1000
@@ -129,20 +128,24 @@ function timeAgo(ts: number): string {
 }
 
 function fileUrl(path: string): string {
-  return `file://${path}`
+  const encodedPath = path.replace(/\\/g, '/').replace(/ /g, '%20')
+  return `file://${encodedPath}`
 }
 
-function useIconUrl(iconPath: string | null): string | null {
+function useFileDataUrl(
+  filePath: string | null,
+  readFn: (path: string) => Promise<string | null>
+): string | null {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!iconPath) {
+    if (!filePath) {
       setDataUrl(null)
       return
     }
 
     let cancelled = false
-    window.bpaste.readIcon(iconPath).then((result) => {
+    readFn(filePath).then((result) => {
       if (!cancelled) {
         setDataUrl(result)
       }
@@ -150,42 +153,39 @@ function useIconUrl(iconPath: string | null): string | null {
     return () => {
       cancelled = true
     }
-  }, [iconPath])
+  }, [filePath, readFn])
 
   return dataUrl
 }
 
-const RICHTEXT_ALLOWED_TAGS = [
-  'p', 'br', 'span', 'div', 'b', 'i', 'u', 'em', 'strong', 's',
-  'a', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'h1', 'h2', 'h3', 'h4'
-]
-
-function sanitizeRichtext(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: RICHTEXT_ALLOWED_TAGS,
-    ALLOWED_ATTR: ['href'],
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|#)/i,
-    FORBID_TAGS: ['style', 'form', 'base', 'meta', 'iframe', 'object', 'embed', 'script'],
-    FORBID_ATTR: ['style', 'target', 'src', 'srcdoc']
-  })
+function useIconUrl(iconPath: string | null): string | null {
+  return useFileDataUrl(iconPath, (path) => window.bpaste.readIcon(path))
 }
 
-function CardBody({ record }: { record: ClipRecord }): JSX.Element {
+function useImageDataUrl(imagePath: string | null): string | null {
+  return useFileDataUrl(imagePath, (path) => window.bpaste.readImage(path))
+}
+
+const CardBody = memo(function CardBody({ record }: { record: ClipRecord }): JSX.Element {
+  const imageDataUrl = useImageDataUrl(record.type === 'image' ? record.image_path : null)
+  const [rtfHtml, setRtfHtml] = useState<string>('')
+
+  useEffect(() => {
+    if (record.type === 'richtext' && record.rtf) {
+      window.bpaste.sanitizeRtf(record.rtf).then(setRtfHtml)
+    } else {
+      setRtfHtml('')
+    }
+  }, [record.type, record.rtf])
+
   if (record.type === 'image' && record.image_path) {
+    const src = imageDataUrl || fileUrl(record.image_path)
     return (
       <img
-        src={fileUrl(record.image_path)}
+        src={src}
         alt="clip"
         className="h-full w-full rounded-lg object-cover"
         draggable={false}
-      />
-    )
-  }
-  if (record.type === 'richtext') {
-    return (
-      <div
-        className="prose-preview text-[13px] leading-snug text-slate-700"
-        dangerouslySetInnerHTML={{ __html: sanitizeRichtext(record.content) }}
       />
     )
   }
@@ -196,17 +196,29 @@ function CardBody({ record }: { record: ClipRecord }): JSX.Element {
       </div>
     )
   }
+  if (record.type === 'richtext' && rtfHtml) {
+    return (
+      <div
+        className="whitespace-pre-wrap break-words text-[13px] leading-snug text-slate-700"
+        dangerouslySetInnerHTML={{ __html: rtfHtml }}
+      />
+    )
+  }
   return (
     <p className="whitespace-pre-wrap break-words text-[13px] leading-snug text-slate-700">
       {record.preview || record.content}
     </p>
   )
-}
+})
 
-const ClipCard = forwardRef<HTMLDivElement, Props>(function ClipCard(
-  { record, active, onSelect, onPaste, onTogglePin, onDelete },
-  ref
-): JSX.Element {
+const ClipCard = memo(function ClipCard({
+  record,
+  active,
+  onSelect,
+  onPaste,
+  onTogglePin,
+  onDelete
+}: Props): JSX.Element {
   const iconDataUrl = useIconUrl(record.source_icon)
   const dominantColor = useDominantColor(record.source_icon, iconDataUrl)
 
@@ -230,7 +242,6 @@ const ClipCard = forwardRef<HTMLDivElement, Props>(function ClipCard(
 
   return (
     <div
-      ref={ref}
       onClick={onPaste}
       onMouseEnter={onSelect}
       className={`group relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover ${

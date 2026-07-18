@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ClipRecord, FilterType } from '../types'
+import type { ClipRecord, FilterType, ClipType } from '../types'
 
 export function useClipboard(): {
   clips: ClipRecord[]
@@ -44,6 +44,9 @@ export function useClipboard(): {
 
   const filtered = useMemo(() => {
     if (filter === 'all') return clips
+    if (filter === 'text') {
+      return clips.filter((c) => c.type === 'text' || c.type === 'richtext')
+    }
     return clips.filter((c) => c.type === filter)
   }, [clips, filter])
 

@@ -1,11 +1,11 @@
 import type { JSX } from 'react'
 import type { FilterType } from '../types'
 
-const FILTERS: { id: FilterType; label: string }[] = [
+const FILTERS: { id: FilterType; label: string; types?: ClipType[] }[] = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'text', label: 'Văn bản' },
-  { id: 'link', label: 'Liên kết' },
-  { id: 'image', label: 'Hình ảnh' }
+  { id: 'text', label: 'Văn bản', types: ['text', 'richtext'] },
+  { id: 'link', label: 'Liên kết', types: ['link'] },
+  { id: 'image', label: 'Hình ảnh', types: ['image'] }
 ]
 
 interface Props {
