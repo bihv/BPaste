@@ -23,7 +23,15 @@ export default function ClipList({
   const activeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    // Only scroll if active item is not visible, not on every navigation
+    const container = activeRef.current?.parentElement
+    if (container && activeRef.current) {
+      const rect = activeRef.current.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      if (rect.left < containerRect.left || rect.right > containerRect.right) {
+        activeRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })
+      }
+    }
   }, [activeIndex])
 
   if (clips.length === 0) {

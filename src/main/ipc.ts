@@ -1,6 +1,7 @@
-import { ipcMain, clipboard, nativeImage, BrowserWindow } from 'electron'
+import { ipcMain, clipboard, nativeImage, BrowserWindow, app } from 'electron'
 import { exec, execFile } from 'child_process'
 import { readFileSync } from 'fs'
+import { join, sep, basename } from 'path'
 import {
   listClips,
   searchClips,
@@ -11,6 +12,17 @@ import {
   type ClipRecord
 } from './database'
 import { markSelfWrite } from './clipboard-watcher'
+
+export function readFileAsDataUrl(filePath: string): string | null {
+  try {
+    const ext = filePath.toLowerCase()
+    const mimeType = ext.endsWith('.png') ? 'image/png' : 'image/jpeg'
+    const data = readFileSync(filePath)
+    return `data:${mimeType};base64,${data.toString('base64')}`
+  } catch {
+    return null
+  }
+}
 
 export interface PasteResult {
   ok: boolean
@@ -56,20 +68,14 @@ function simulatePaste(previousAppBundleId?: string | null): void {
         'end run'
       : 'tell application "System Events" to keystroke "v" using command down'
     const args = safeBundleId ? ['-e', script, safeBundleId] : ['-e', script]
-    execFile('osascript', args, (err) => {
-      if (err) console.error('[paste] osascript error', err)
-    })
+    execFile('osascript', args, () => {})
   } else if (process.platform === 'win32') {
     exec(
       'powershell -NoProfile -Command "(New-Object -ComObject WScript.Shell).SendKeys(\'^v\')"',
-      (err) => {
-        if (err) console.error('[paste] SendKeys error', err)
-      }
+      () => {}
     )
   } else {
-    exec('xdotool key --clearmodifiers ctrl+v', (err) => {
-      if (err) console.error('[paste] xdotool error', err)
-    })
+    exec('xdotool key --clearmodifiers ctrl+v', () => {})
   }
 }
 
@@ -115,5 +121,12 @@ export function registerIpcHandlers(
   ipcMain.handle('window:hide', () => {
     getWindow()?.hide()
     return true
+  })
+
+  ipcMain.handle('icons:read', (_e, filePath: string) => {
+    const iconDir = join(app.getPath('userData'), 'icons')
+    const safeName = basename(filePath)
+    const requestedPath = join(iconDir, safeName)
+    return readFileAsDataUrl(requestedPath)
   })
 }

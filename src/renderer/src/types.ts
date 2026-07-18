@@ -10,6 +10,8 @@ export interface ClipRecord {
   hash: string
   pinned: number
   created_at: number
+  source_name: string | null
+  source_icon: string | null
 }
 
 export type FilterType = 'all' | ClipType

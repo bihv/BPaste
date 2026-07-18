@@ -3,6 +3,7 @@ import { createHash } from 'crypto'
 import { join } from 'path'
 import { mkdirSync, writeFileSync } from 'fs'
 import { upsertClip, type ClipType, type NewClip, type ClipRecord } from './database'
+import { getActiveAppSource, initSourceIconDir } from './sources'
 
 const POLL_INTERVAL = 600
 const URL_REGEX = /^(https?:\/\/|www\.)[^\s]+$/i
@@ -38,12 +39,15 @@ function readClipboard(): NewClip | null {
     const fileName = `${hash.slice(0, 16)}.png`
     const filePath = join(imageDir, fileName)
     writeFileSync(filePath, png)
+    const source = getActiveAppSource()
     return {
       type: 'image',
       content: '',
       image_path: filePath,
       preview: `Image ${size.width}x${size.height}`,
-      hash
+      hash,
+      source_name: source.name,
+      source_icon: source.iconPath
     }
   }
 
@@ -58,18 +62,23 @@ function readClipboard(): NewClip | null {
   const hash = sha256(hashSource)
   if (hash === lastHash) return null
 
+  const source = getActiveAppSource()
   return {
     type,
     content: type === 'richtext' ? html || text : text,
     rtf: rtf || null,
     preview: buildPreview(text || html.replace(/<[^>]+>/g, ' ')),
-    hash
+    hash,
+    source_name: source.name,
+    source_icon: source.iconPath
   }
 }
 
 export function startWatcher(onChange: (record: ClipRecord, isNew: boolean) => void): void {
   imageDir = join(app.getPath('userData'), 'images')
   mkdirSync(imageDir, { recursive: true })
+
+  initSourceIconDir()
 
   const initial = clipboard.readImage()
   if (!initial.isEmpty()) {

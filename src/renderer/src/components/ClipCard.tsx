@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useState, useEffect } from 'react'
 import type { JSX } from 'react'
 import DOMPurify from 'dompurify'
 import type { ClipRecord, ClipType } from '../types'
@@ -31,6 +31,29 @@ function timeAgo(ts: number): string {
 
 function fileUrl(path: string): string {
   return `file://${path}`
+}
+
+function useIconUrl(iconPath: string | null): string | null {
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!iconPath) {
+      setDataUrl(null)
+      return
+    }
+
+    let cancelled = false
+    window.bpaste.readIcon(iconPath).then((result) => {
+      if (!cancelled) {
+        setDataUrl(result)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [iconPath])
+
+  return dataUrl
 }
 
 const RICHTEXT_ALLOWED_TAGS = [
@@ -86,6 +109,7 @@ const ClipCard = forwardRef<HTMLDivElement, Props>(function ClipCard(
   ref
 ): JSX.Element {
   const meta = TYPE_META[record.type]
+  const iconDataUrl = useIconUrl(record.source_icon)
   return (
     <div
       ref={ref}
@@ -98,12 +122,20 @@ const ClipCard = forwardRef<HTMLDivElement, Props>(function ClipCard(
       }`}
     >
       <div className="mb-2 flex items-center justify-between text-[11px] text-white/45">
-        <span className="flex items-center gap-1.5">
-          <span className="flex h-4 w-4 items-center justify-center rounded bg-white/15 text-[10px] font-bold text-white/80">
-            {meta.icon}
-          </span>
-          {meta.label}
-        </span>
+        <div className="flex items-center gap-2">
+          {record.source_name && (
+            <span className="flex items-center gap-1 text-white/40">
+              {iconDataUrl && (
+                <img
+                  src={iconDataUrl}
+                  alt=""
+                  className="h-3.5 w-3.5 rounded"
+                />
+              )}
+              <span>{record.source_name}</span>
+            </span>
+          )}
+        </div>
         <span>{timeAgo(record.created_at)}</span>
       </div>
 

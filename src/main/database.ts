@@ -15,6 +15,8 @@ export interface ClipRecord {
   hash: string
   pinned: number
   created_at: number
+  source_name: string | null
+  source_icon: string | null
 }
 
 export interface NewClip {
@@ -24,6 +26,8 @@ export interface NewClip {
   image_path?: string | null
   preview: string
   hash: string
+  source_name?: string | null
+  source_icon?: string | null
 }
 
 const MAX_ITEMS = 500
@@ -45,7 +49,9 @@ export function initDatabase(): void {
       preview TEXT NOT NULL DEFAULT '',
       hash TEXT NOT NULL,
       pinned INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      source_name TEXT,
+      source_icon TEXT
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_clips_hash ON clips(hash);
     CREATE INDEX IF NOT EXISTS idx_clips_created ON clips(created_at DESC);
@@ -59,14 +65,22 @@ export function upsertClip(clip: NewClip): { record: ClipRecord; isNew: boolean 
     | undefined
 
   if (existing) {
-    db.prepare('UPDATE clips SET created_at = ? WHERE id = ?').run(now, existing.id)
-    return { record: { ...existing, created_at: now }, isNew: false }
+    db.prepare('UPDATE clips SET created_at = ?, source_name = ?, source_icon = ? WHERE id = ?').run(
+      now,
+      clip.source_name ?? null,
+      clip.source_icon ?? null,
+      existing.id
+    )
+    return {
+      record: { ...existing, created_at: now, source_name: clip.source_name ?? null, source_icon: clip.source_icon ?? null },
+      isNew: false
+    }
   }
 
   const info = db
     .prepare(
-      `INSERT INTO clips (type, content, rtf, image_path, preview, hash, pinned, created_at)
-       VALUES (@type, @content, @rtf, @image_path, @preview, @hash, 0, @created_at)`
+      `INSERT INTO clips (type, content, rtf, image_path, preview, hash, pinned, created_at, source_name, source_icon)
+       VALUES (@type, @content, @rtf, @image_path, @preview, @hash, 0, @created_at, @source_name, @source_icon)`
     )
     .run({
       type: clip.type,
@@ -75,7 +89,9 @@ export function upsertClip(clip: NewClip): { record: ClipRecord; isNew: boolean 
       image_path: clip.image_path ?? null,
       preview: clip.preview,
       hash: clip.hash,
-      created_at: now
+      created_at: now,
+      source_name: clip.source_name ?? null,
+      source_icon: clip.source_icon ?? null
     })
 
   pruneOld()

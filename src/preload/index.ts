@@ -10,6 +10,8 @@ export interface ClipRecord {
   hash: string
   pinned: number
   created_at: number
+  source_name: string | null
+  source_icon: string | null
 }
 
 const api = {
@@ -20,6 +22,7 @@ const api = {
   pin: (id: number, pinned: boolean): Promise<boolean> => ipcRenderer.invoke('clips:pin', id, pinned),
   clear: (): Promise<boolean> => ipcRenderer.invoke('clips:clear'),
   hide: (): Promise<void> => ipcRenderer.invoke('window:hide'),
+  readIcon: (filePath: string): Promise<string | null> => ipcRenderer.invoke('icons:read', filePath),
   onChanged: (cb: (payload: { record: ClipRecord; isNew: boolean }) => void): (() => void) => {
     const handler = (_e: unknown, payload: { record: ClipRecord; isNew: boolean }): void =>
       cb(payload)
