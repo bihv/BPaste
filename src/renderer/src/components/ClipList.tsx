@@ -15,6 +15,8 @@ interface Props {
   onPastePlain: (id: number) => void
   onTogglePin: (record: ClipRecord) => void
   onDelete: (id: number) => void
+  onPreview: (record: ClipRecord) => void
+  onEdit: (record: ClipRecord) => void
 }
 
 export default function ClipList({
@@ -24,11 +26,13 @@ export default function ClipList({
   onPaste,
   onPastePlain,
   onTogglePin,
-  onDelete
+  onDelete,
+  onPreview,
+  onEdit
 }: Props): JSX.Element {
   const activeRef = useRef<HTMLDivElement>(null)
   const parentRef = useRef<HTMLDivElement>(null)
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: number; pinned: boolean; type: ClipType } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clip: ClipRecord; pinned: boolean; type: ClipType } | null>(null)
 
   const rowVirtualizer = useVirtualizer({
     count: clips.length,
@@ -48,10 +52,10 @@ export default function ClipList({
   }, [contextMenu, closeContextMenu])
 
   const handleContextMenu = useCallback(
-    (clipId: number, pinned: boolean, type: ClipType) => (e: React.MouseEvent) => {
+    (clip: ClipRecord) => (e: React.MouseEvent) => {
       e.preventDefault()
-      onSelect(clips.findIndex(c => c.id === clipId))
-      setContextMenu({ x: e.clientX, y: e.clientY, clipId, pinned, type })
+      onSelect(clips.findIndex(c => c.id === clip.id))
+      setContextMenu({ x: e.clientX, y: e.clientY, clip, pinned: clip.pinned === 1, type: clip.type })
     },
     [clips, onSelect]
   )
@@ -85,6 +89,20 @@ export default function ClipList({
       closeContextMenu()
     },
     [onDelete, closeContextMenu]
+  )
+  const handlePreview = useCallback(
+    (clip: ClipRecord) => () => {
+      onPreview(clip)
+      closeContextMenu()
+    },
+    [onPreview, closeContextMenu]
+  )
+  const handleEdit = useCallback(
+    (clip: ClipRecord) => () => {
+      onEdit(clip)
+      closeContextMenu()
+    },
+    [onEdit, closeContextMenu]
   )
 
   if (clips.length === 0) {
@@ -129,7 +147,7 @@ export default function ClipList({
                 onPaste={handlePaste(clip.id)}
                 onTogglePin={handleTogglePin(clip)}
                 onDelete={handleDelete(clip.id)}
-                onContextMenu={handleContextMenu(clip.id, clip.pinned === 1, clip.type)}
+                onContextMenu={handleContextMenu(clip)}
               />
             </div>
           )
@@ -142,24 +160,42 @@ export default function ClipList({
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
+          {(contextMenu.type === 'text' || contextMenu.type === 'richtext') && (
+            <button
+              onClick={handlePreview(contextMenu.clip)}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <span>👁</span>
+              <span>Xem trước</span>
+            </button>
+          )}
           {(contextMenu.type === 'link' || contextMenu.type === 'richtext') && (
             <button
-              onClick={handlePastePlain(contextMenu.clipId)}
+              onClick={handlePastePlain(contextMenu.clip.id)}
               className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
             >
               <span>T</span>
               <span>Dán text thuần</span>
             </button>
           )}
+          {contextMenu.type !== 'image' && (
+            <button
+              onClick={handleEdit(contextMenu.clip)}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <span>✎</span>
+              <span>Chỉnh sửa</span>
+            </button>
+          )}
           <button
-            onClick={handleTogglePin(clips.find(c => c.id === contextMenu.clipId)!)}
+            onClick={handleTogglePin(clips.find(c => c.id === contextMenu.clip.id)!)}
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
           >
             <span>{contextMenu.pinned ? '☆' : '★'}</span>
             <span>{contextMenu.pinned ? 'Bỏ ghim' : 'Ghim'}</span>
           </button>
           <button
-            onClick={handleDelete(contextMenu.clipId)}
+            onClick={handleDelete(contextMenu.clip.id)}
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
           >
             <span>✕</span>

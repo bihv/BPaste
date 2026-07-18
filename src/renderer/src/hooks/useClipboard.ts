@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ClipRecord, FilterType, ClipType } from '../types'
+import type { ClipRecord, FilterType } from '../types'
 
 export function useClipboard(): {
   clips: ClipRecord[]
@@ -10,6 +10,7 @@ export function useClipboard(): {
   setFilter: (f: FilterType) => void
   paste: (id: number) => Promise<void>
   pastePlain: (id: number) => Promise<void>
+  update: (id: number, content: string, preview: string) => Promise<void>
   remove: (id: number) => Promise<void>
   togglePin: (record: ClipRecord) => Promise<void>
   clearAll: () => Promise<void>
@@ -59,6 +60,14 @@ export function useClipboard(): {
     await window.bpaste.pastePlain(id)
   }, [])
 
+  const update = useCallback(
+    async (id: number, content: string, preview: string) => {
+      await window.bpaste.update(id, content, preview)
+      await reload()
+    },
+    [reload]
+  )
+
   const remove = useCallback(
     async (id: number) => {
       await window.bpaste.delete(id)
@@ -89,6 +98,7 @@ export function useClipboard(): {
     setFilter,
     paste,
     pastePlain,
+    update,
     remove,
     togglePin,
     clearAll,

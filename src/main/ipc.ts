@@ -9,6 +9,7 @@ import {
   getClip,
   deleteClip,
   setPinned,
+  updateClip,
   clearAll,
   type ClipRecord
 } from './database'
@@ -113,6 +114,12 @@ export function registerIpcHandlers(
   ipcMain.handle('clips:pin', (_e, id: number, pinned: boolean) => {
     setPinned(id, pinned)
     return true
+  })
+
+  ipcMain.handle('clips:update', (_e, id: number, content: string, preview: string) => {
+    const sanitized = DOMPurify.sanitize(content, { USE_PROFILES: { html: true } })
+    const record = updateClip(id, sanitized, preview)
+    return record ?? null
   })
 
   ipcMain.handle('clips:clear', () => {

@@ -134,6 +134,11 @@ export function setPinned(id: number, pinned: boolean): void {
   db.prepare('UPDATE clips SET pinned = ? WHERE id = ?').run(pinned ? 1 : 0, id)
 }
 
+export function updateClip(id: number, content: string, preview: string): ClipRecord | undefined {
+  db.prepare('UPDATE clips SET content = ?, preview = ? WHERE id = ?').run(content, preview, id)
+  return getClip(id)
+}
+
 export function clearAll(): ClipRecord[] {
   const removed = db.prepare('SELECT * FROM clips WHERE pinned = 0').all() as ClipRecord[]
   db.prepare('DELETE FROM clips WHERE pinned = 0').run()

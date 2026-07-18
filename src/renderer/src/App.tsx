@@ -4,6 +4,9 @@ import { useClipboard } from './hooks/useClipboard'
 import { SearchBar } from './components/SearchBar'
 import TypeFilter from './components/TypeFilter'
 import ClipList from './components/ClipList'
+import PreviewModal from './components/PreviewModal'
+import EditModal from './components/EditModal'
+import type { ClipRecord } from './types'
 
 export default function App(): JSX.Element {
   const {
@@ -14,12 +17,15 @@ export default function App(): JSX.Element {
     setFilter,
     paste,
     pastePlain,
+    update,
     remove,
     togglePin,
     clearAll
   } = useClipboard()
 
   const [activeIndex, setActiveIndex] = useState(0)
+  const [previewRecord, setPreviewRecord] = useState<ClipRecord | null>(null)
+  const [editRecord, setEditRecord] = useState<ClipRecord | null>(null)
 
   useEffect(() => {
     setActiveIndex(0)
@@ -33,6 +39,8 @@ export default function App(): JSX.Element {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
+        if (previewRecord) { setPreviewRecord(null); return }
+        if (editRecord) { setEditRecord(null); return }
         window.bpaste.hide()
         return
       }
@@ -46,6 +54,18 @@ export default function App(): JSX.Element {
         e.preventDefault()
         const record = filtered[activeIndex]
         if (record) void paste(record.id)
+      } else if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault()
+        const record = filtered[activeIndex]
+        if (record && (record.type === 'text' || record.type === 'richtext')) {
+          setPreviewRecord(record)
+        }
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault()
+        const record = filtered[activeIndex]
+        if (record && record.type !== 'image') {
+          setEditRecord(record)
+        }
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && e.metaKey === false && e.ctrlKey) {
         e.preventDefault()
         const record = filtered[activeIndex]
@@ -54,7 +74,7 @@ export default function App(): JSX.Element {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [filtered, activeIndex, paste, remove, clampIndex])
+  }, [filtered, activeIndex, paste, remove, clampIndex, previewRecord, editRecord])
 
   return (
     <div className="flex h-screen w-screen flex-col bg-paste-bg animate-rise">
@@ -83,13 +103,29 @@ export default function App(): JSX.Element {
         onPastePlain={(id) => void pastePlain(id)}
         onTogglePin={(record) => void togglePin(record)}
         onDelete={(id) => void remove(id)}
+        onPreview={setPreviewRecord}
+        onEdit={setEditRecord}
       />
+
+      {previewRecord && (
+        <PreviewModal record={previewRecord} onClose={() => setPreviewRecord(null)} />
+      )}
+
+      {editRecord && (
+        <EditModal
+          record={editRecord}
+          onSave={(content, preview) => void update(editRecord.id, content, preview)}
+          onClose={() => setEditRecord(null)}
+        />
+      )}
 
       <footer className="flex items-center justify-center gap-4 border-t border-black/5 px-4 py-1.5 text-[11px] text-slate-400">
         <span>← → di chuyển</span>
         <span>Enter dán</span>
+        <span>P xem trước</span>
+        <span>E sửa</span>
         <span>Ctrl+Delete xóa</span>
-        <span>Esc ẩn</span>
+        <span>Esc đóng</span>
       </footer>
     </div>
   )
