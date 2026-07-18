@@ -13,6 +13,7 @@ export default function App(): JSX.Element {
     filter,
     setFilter,
     paste,
+    pastePlain,
     remove,
     togglePin,
     clearAll
@@ -79,6 +80,7 @@ export default function App(): JSX.Element {
         activeIndex={activeIndex}
         onSelect={setActiveIndex}
         onPaste={(id) => void paste(id)}
+        onPastePlain={(id) => void pastePlain(id)}
         onTogglePin={(record) => void togglePin(record)}
         onDelete={(id) => void remove(id)}
       />

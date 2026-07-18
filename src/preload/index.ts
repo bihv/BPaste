@@ -18,6 +18,7 @@ const api = {
   list: (): Promise<ClipRecord[]> => ipcRenderer.invoke('clips:list'),
   search: (query: string): Promise<ClipRecord[]> => ipcRenderer.invoke('clips:search', query),
   paste: (id: number): Promise<{ ok: boolean }> => ipcRenderer.invoke('clips:paste', id),
+  pastePlain: (id: number): Promise<{ ok: boolean }> => ipcRenderer.invoke('clips:pastePlain', id),
   delete: (id: number): Promise<boolean> => ipcRenderer.invoke('clips:delete', id),
   pin: (id: number, pinned: boolean): Promise<boolean> => ipcRenderer.invoke('clips:pin', id, pinned),
   clear: (): Promise<boolean> => ipcRenderer.invoke('clips:clear'),

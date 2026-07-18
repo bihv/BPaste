@@ -1,7 +1,7 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import type { JSX } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import type { ClipRecord } from '../types'
+import type { ClipRecord, ClipType } from '../types'
 import ClipCard from './ClipCard'
 
 const CARD_WIDTH = 224 // w-56 = 14rem = 224px
@@ -12,6 +12,7 @@ interface Props {
   activeIndex: number
   onSelect: (index: number) => void
   onPaste: (id: number) => void
+  onPastePlain: (id: number) => void
   onTogglePin: (record: ClipRecord) => void
   onDelete: (id: number) => void
 }
@@ -21,11 +22,13 @@ export default function ClipList({
   activeIndex,
   onSelect,
   onPaste,
+  onPastePlain,
   onTogglePin,
   onDelete
 }: Props): JSX.Element {
   const activeRef = useRef<HTMLDivElement>(null)
   const parentRef = useRef<HTMLDivElement>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; clipId: number; pinned: boolean; type: ClipType } | null>(null)
 
   const rowVirtualizer = useVirtualizer({
     count: clips.length,
@@ -34,6 +37,32 @@ export default function ClipList({
     estimateSize: () => CARD_WIDTH + CARD_GAP,
     overscan: 3,
   })
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
+
+  useEffect(() => {
+    if (!contextMenu) return
+    const handler = () => closeContextMenu()
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [contextMenu, closeContextMenu])
+
+  const handleContextMenu = useCallback(
+    (clipId: number, pinned: boolean, type: ClipType) => (e: React.MouseEvent) => {
+      e.preventDefault()
+      onSelect(clips.findIndex(c => c.id === clipId))
+      setContextMenu({ x: e.clientX, y: e.clientY, clipId, pinned, type })
+    },
+    [clips, onSelect]
+  )
+
+  const handlePastePlain = useCallback(
+    (id: number) => () => {
+      onPastePlain(id)
+      closeContextMenu()
+    },
+    [onPastePlain, closeContextMenu]
+  )
 
   const handleSelect = useCallback(
     (index: number) => () => onSelect(index),
@@ -44,12 +73,18 @@ export default function ClipList({
     [onPaste]
   )
   const handleTogglePin = useCallback(
-    (record: ClipRecord) => () => onTogglePin(record),
-    [onTogglePin]
+    (record: ClipRecord) => () => {
+      onTogglePin(record)
+      closeContextMenu()
+    },
+    [onTogglePin, closeContextMenu]
   )
   const handleDelete = useCallback(
-    (id: number) => () => onDelete(id),
-    [onDelete]
+    (id: number) => () => {
+      onDelete(id)
+      closeContextMenu()
+    },
+    [onDelete, closeContextMenu]
   )
 
   if (clips.length === 0) {
@@ -65,7 +100,7 @@ export default function ClipList({
   return (
     <div
       ref={parentRef}
-      className="no-scrollbar flex flex-1 items-stretch overflow-x-auto overflow-y-hidden px-4 py-3"
+      className="no-scrollbar relative flex flex-1 items-stretch overflow-x-auto overflow-y-hidden px-4 py-3"
     >
       <div
         className="relative flex gap-3"
@@ -94,11 +129,44 @@ export default function ClipList({
                 onPaste={handlePaste(clip.id)}
                 onTogglePin={handleTogglePin(clip)}
                 onDelete={handleDelete(clip.id)}
+                onContextMenu={handleContextMenu(clip.id, clip.pinned === 1, clip.type)}
               />
             </div>
           )
         })}
       </div>
+
+      {contextMenu && (
+        <div
+          className="fixed z-50 rounded-lg border border-black/10 bg-white py-1 shadow-lg"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(contextMenu.type === 'link' || contextMenu.type === 'richtext') && (
+            <button
+              onClick={handlePastePlain(contextMenu.clipId)}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <span>T</span>
+              <span>Dán text thuần</span>
+            </button>
+          )}
+          <button
+            onClick={handleTogglePin(clips.find(c => c.id === contextMenu.clipId)!)}
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+          >
+            <span>{contextMenu.pinned ? '☆' : '★'}</span>
+            <span>{contextMenu.pinned ? 'Bỏ ghim' : 'Ghim'}</span>
+          </button>
+          <button
+            onClick={handleDelete(contextMenu.clipId)}
+            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+          >
+            <span>✕</span>
+            <span>Xóa</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

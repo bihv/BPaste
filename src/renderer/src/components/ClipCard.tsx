@@ -115,6 +115,7 @@ interface Props {
   onPaste: () => void
   onTogglePin: () => void
   onDelete: () => void
+  onContextMenu: (e: React.MouseEvent) => void
 }
 
 function timeAgo(ts: number): string {
@@ -217,7 +218,8 @@ const ClipCard = memo(function ClipCard({
   onSelect,
   onPaste,
   onTogglePin,
-  onDelete
+  onDelete,
+  onContextMenu
 }: Props): JSX.Element {
   const iconDataUrl = useIconUrl(record.source_icon)
   const dominantColor = useDominantColor(record.source_icon, iconDataUrl)
@@ -244,9 +246,11 @@ const ClipCard = memo(function ClipCard({
     <div
       onClick={onPaste}
       onMouseEnter={onSelect}
-      className={`group relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover ${
+      onContextMenu={onContextMenu}
+      className={`relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover ${
         active ? 'shadow-cardActive ring-2 ring-blue-500/50' : ''
       }`}
+      role="menuitem"
     >
       <div
         className="relative flex h-14 items-center gap-2.5 border-b border-black/5 px-3"
@@ -279,42 +283,14 @@ const ClipCard = memo(function ClipCard({
             {timeAgo(record.created_at)}
           </span>
         </div>
+        {record.pinned === 1 && (
+          <span className="text-[12px] text-amber-500">★</span>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 p-3">
         <CardBody record={record} />
       </div>
-
-      <div className="absolute right-2 top-16 flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onTogglePin()
-          }}
-          title={record.pinned ? 'Bỏ ghim' : 'Ghim'}
-          className={`flex h-7 w-7 items-center justify-center rounded-lg text-[11px] shadow-sm transition-colors ${
-            record.pinned
-              ? 'bg-amber-400 text-amber-900'
-              : 'bg-white text-slate-500 hover:bg-slate-100'
-          }`}
-        >
-          ★
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete()
-          }}
-          title="Xóa"
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[11px] text-slate-500 shadow-sm transition-colors hover:bg-red-50 hover:text-red-500"
-        >
-          ✕
-        </button>
-      </div>
-
-      {record.pinned === 1 && (
-        <div className="absolute left-2 top-16 text-[10px] text-amber-500">★</div>
-      )}
     </div>
   )
 })

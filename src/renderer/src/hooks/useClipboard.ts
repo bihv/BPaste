@@ -9,6 +9,7 @@ export function useClipboard(): {
   filter: FilterType
   setFilter: (f: FilterType) => void
   paste: (id: number) => Promise<void>
+  pastePlain: (id: number) => Promise<void>
   remove: (id: number) => Promise<void>
   togglePin: (record: ClipRecord) => Promise<void>
   clearAll: () => Promise<void>
@@ -54,6 +55,10 @@ export function useClipboard(): {
     await window.bpaste.paste(id)
   }, [])
 
+  const pastePlain = useCallback(async (id: number) => {
+    await window.bpaste.pastePlain(id)
+  }, [])
+
   const remove = useCallback(
     async (id: number) => {
       await window.bpaste.delete(id)
@@ -83,6 +88,7 @@ export function useClipboard(): {
     filter,
     setFilter,
     paste,
+    pastePlain,
     remove,
     togglePin,
     clearAll,

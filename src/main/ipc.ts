@@ -46,10 +46,21 @@ function writeClipToClipboard(record: ClipRecord): void {
     clipboard.writeText(record.content)
   }
 
-  // Pre-arm the watcher with the hash we just wrote instead of reading the
-  // clipboard back: on macOS the pasteboard updates asynchronously, so an
-  // immediate read often returns stale content and lets the paste re-register
-  // as a brand new clip.
+  markSelfWrite(record.hash)
+}
+
+function writeClipAsPlainText(record: ClipRecord): void {
+  let plainText = ''
+  if (record.type === 'link') {
+    plainText = record.content
+  } else if (record.type === 'richtext') {
+    plainText = record.preview || record.content.replace(/<[^>]+>/g, ' ')
+  } else if (record.type === 'image') {
+    return
+  } else {
+    plainText = record.content
+  }
+  clipboard.writeText(plainText)
   markSelfWrite(record.hash)
 }
 
@@ -116,8 +127,17 @@ export function registerIpcHandlers(
     const previousAppBundleId = getPreviousAppBundleId()
     const win = getWindow()
     if (win) win.hide()
-    // Reactivate the previous app and send Cmd+V. The activate step handles focus,
-    // so a short delay is enough to let our window get out of the way.
+    setTimeout(() => simulatePaste(previousAppBundleId), 120)
+    return { ok: true }
+  })
+
+  ipcMain.handle('clips:pastePlain', (_e, id: number) => {
+    const record = getClip(id)
+    if (!record) return { ok: false }
+    writeClipAsPlainText(record)
+    const previousAppBundleId = getPreviousAppBundleId()
+    const win = getWindow()
+    if (win) win.hide()
     setTimeout(() => simulatePaste(previousAppBundleId), 120)
     return { ok: true }
   })
