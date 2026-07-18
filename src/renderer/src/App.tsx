@@ -56,10 +56,10 @@ export default function App(): JSX.Element {
   }, [filtered, activeIndex, paste, remove, clampIndex])
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-paste-bg backdrop-blur-2xl animate-rise">
-      <header className="flex items-center justify-between px-4 py-3">
+    <div className="flex h-screen w-screen flex-col bg-paste-bg animate-rise">
+      <header className="flex items-center justify-between border-b border-black/5 px-4 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold tracking-wide text-white/90">BPaste</span>
+          <span className="text-sm font-semibold tracking-wide text-slate-800">BPaste</span>
           <TypeFilter value={filter} onChange={setFilter} />
         </div>
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export default function App(): JSX.Element {
           <button
             onClick={() => void clearAll()}
             title="Xóa tất cả (giữ mục đã ghim)"
-            className="rounded-lg px-2.5 py-1.5 text-xs text-white/55 ring-1 ring-white/10 hover:bg-white/10 hover:text-white/80"
+            className="rounded-lg px-2.5 py-1.5 text-xs text-slate-500 ring-1 ring-black/10 hover:bg-black/5 hover:text-slate-700"
           >
             Xóa hết
           </button>
@@ -83,7 +83,7 @@ export default function App(): JSX.Element {
         onDelete={(id) => void remove(id)}
       />
 
-      <footer className="flex items-center justify-center gap-4 border-t border-white/5 px-4 py-1.5 text-[11px] text-white/35">
+      <footer className="flex items-center justify-center gap-4 border-t border-black/5 px-4 py-1.5 text-[11px] text-slate-400">
         <span>← → di chuyển</span>
         <span>Enter dán</span>
         <span>Ctrl+Delete xóa</span>

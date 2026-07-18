@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { JSX } from 'react'
 import type { ClipRecord } from '../types'
 import ClipCard from './ClipCard'
@@ -22,28 +22,16 @@ export default function ClipList({
 }: Props): JSX.Element {
   const activeRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    // Only scroll if active item is not visible, not on every navigation
-    const container = activeRef.current?.parentElement
-    if (container && activeRef.current) {
-      const rect = activeRef.current.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
-      if (rect.left < containerRect.left || rect.right > containerRect.right) {
-        activeRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })
-      }
-    }
-  }, [activeIndex])
-
   if (clips.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-white/40">
+      <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
         Chưa có nội dung nào. Sao chép gì đó để bắt đầu.
       </div>
     )
   }
 
   return (
-    <div className="no-scrollbar flex flex-1 items-stretch gap-3 overflow-x-auto overflow-y-hidden px-4 pb-4">
+    <div className="no-scrollbar flex flex-1 items-stretch gap-3 overflow-x-auto overflow-y-hidden px-4 py-3">
       {clips.map((clip, index) => (
         <ClipCard
           key={clip.id}

@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 export interface ClipRecord {
   id: number
-  type: 'text' | 'link' | 'image' | 'richtext'
+  type: 'text' | 'link' | 'image'
   content: string
   rtf: string | null
   image_path: string | null

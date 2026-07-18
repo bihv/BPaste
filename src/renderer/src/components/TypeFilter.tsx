@@ -5,8 +5,7 @@ const FILTERS: { id: FilterType; label: string }[] = [
   { id: 'all', label: 'Tất cả' },
   { id: 'text', label: 'Văn bản' },
   { id: 'link', label: 'Liên kết' },
-  { id: 'image', label: 'Hình ảnh' },
-  { id: 'richtext', label: 'Rich text' }
+  { id: 'image', label: 'Hình ảnh' }
 ]
 
 interface Props {
@@ -23,8 +22,8 @@ export default function TypeFilter({ value, onChange }: Props): JSX.Element {
           onClick={() => onChange(f.id)}
           className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
             value === f.id
-              ? 'bg-white/20 text-white'
-              : 'text-white/55 hover:bg-white/10 hover:text-white/80'
+              ? 'bg-blue-500 text-white shadow-sm'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
           }`}
         >
           {f.label}

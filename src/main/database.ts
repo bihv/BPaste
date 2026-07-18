@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { join } from 'path'
 import { mkdirSync } from 'fs'
 
-export type ClipType = 'text' | 'link' | 'image' | 'richtext'
+export type ClipType = 'text' | 'link' | 'image'
 
 export interface ClipRecord {
   id: number

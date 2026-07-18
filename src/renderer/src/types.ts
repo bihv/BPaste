@@ -1,4 +1,4 @@
-export type ClipType = 'text' | 'link' | 'image' | 'richtext'
+export type ClipType = 'text' | 'link' | 'image'
 
 export interface ClipRecord {
   id: number

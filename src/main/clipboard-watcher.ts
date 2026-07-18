@@ -19,8 +19,7 @@ function sha256(input: string | Buffer): string {
   return createHash('sha256').update(input).digest('hex')
 }
 
-function classify(text: string, html: string): ClipType {
-  if (html && html.trim() && html.trim() !== text.trim()) return 'richtext'
+function classify(text: string, _html: string): ClipType {
   if (text && URL_REGEX.test(text.trim())) return 'link'
   return 'text'
 }
@@ -58,14 +57,14 @@ function readClipboard(): NewClip | null {
   if (!text && !html) return null
 
   const type = classify(text, html)
-  const hashSource = type === 'richtext' ? html || rtf || text : text.trim()
+  const hashSource = html || rtf || text
   const hash = sha256(hashSource)
   if (hash === lastHash) return null
 
   const source = getActiveAppSource()
   return {
     type,
-    content: type === 'richtext' ? html || text : text,
+    content: html || text,
     rtf: rtf || null,
     preview: buildPreview(text || html.replace(/<[^>]+>/g, ' ')),
     hash,
