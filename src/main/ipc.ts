@@ -108,6 +108,8 @@ function simulatePaste(previousAppBundleId?: string | null): void {
 
 export function registerIpcHandlers(
   getWindow: () => BrowserWindow | null,
+  getSettingsWindow: () => BrowserWindow | null,
+  openSettingsWindow: () => void,
   getPreviousAppBundleId: () => string | null = () => null
 ): void {
   ipcMain.handle('clips:list', () => listClips())
@@ -316,5 +318,11 @@ export function registerIpcHandlers(
 
   ipcMain.handle('settings:all', () => {
     return getAllSettings()
+  })
+
+  ipcMain.handle('settings:openWindow', () => {
+    console.log('[IPC] settings:openWindow received')
+    openSettingsWindow()
+    return true
   })
 }

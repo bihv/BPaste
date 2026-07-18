@@ -15,15 +15,15 @@ interface Props {
 
 export default function TypeFilter({ value, onChange }: Props): JSX.Element {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5 bg-hover rounded-lg p-0.5">
       {FILTERS.map((f) => (
         <button
           key={f.id}
           onClick={() => onChange(f.id)}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ${
             value === f.id
-              ? 'bg-accent text-white shadow-sm'
-              : 'text-theme-secondary hover:bg-black/5 hover:text-theme-primary'
+              ? 'bg-white dark:bg-white/10 text-theme-primary shadow-sm'
+              : 'text-theme-tertiary hover:text-theme-secondary'
           }`}
         >
           {f.label}

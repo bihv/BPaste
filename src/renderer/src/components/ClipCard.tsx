@@ -260,52 +260,60 @@ const ClipCard = memo(function ClipCard({
       onClick={onPaste}
       onMouseEnter={onSelect}
       onContextMenu={handleContextMenu}
-      className={`relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/10 bg-white/80 shadow-card backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover vibrancy-card ${
-        active ? 'shadow-cardActive ring-2 ring-accent/50' : ''
+      className={`group relative flex h-full w-56 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl transition-all duration-200 ${
+        active
+          ? 'shadow-card-active ring-2 ring-accent/40 bg-theme-card-hover'
+          : 'vibrancy-card'
       }`}
     >
       <div
-        className="relative flex h-14 items-center gap-2.5 border-b border-black/5 px-3"
+        className="relative flex h-12 items-center gap-2.5 border-b border-black/[0.06] dark:border-white/[0.06] px-3"
         style={{ backgroundColor: headerBg }}
       >
         {iconDataUrl ? (
           <img
             src={iconDataUrl}
             alt=""
-            className="h-8 w-8 rounded-lg object-contain"
+            className="h-7 w-7 rounded-lg object-contain"
             draggable={false}
           />
         ) : (
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg"
+            style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
           >
-            <span className="text-sm font-medium" style={{ color: headerTextColor }}>
+            <span className="text-xs font-semibold" style={{ color: headerTextColor }}>
               {record.source_name?.[0]?.toUpperCase() || '?'}
             </span>
           </div>
         )}
         <div className="min-w-0 flex-1">
           {record.source_name && (
-            <span className="truncate block text-[12px] font-semibold" style={{ color: headerTextColor }}>
+            <span className="truncate block text-[11px] font-semibold" style={{ color: headerTextColor }}>
               {record.source_name}
             </span>
           )}
-          <span className="block text-[10px]" style={{ color: headerTextColor, opacity: 0.7 }}>
+          <span className="block text-[10px]" style={{ color: headerTextColor, opacity: 0.65 }}>
             {timeAgo(record.created_at)}
           </span>
         </div>
-        {record.pinned === 1 && (
-          <span className="text-[12px] text-amber-500">★</span>
-        )}
-        {record.pinboard_id !== null && (
-          <span className="text-[12px] text-indigo-500">📌</span>
-        )}
+        <div className="flex items-center gap-1">
+          {record.pinned === 1 && (
+            <span className="text-[12px] text-amber-500">★</span>
+          )}
+          {record.pinboard_id !== null && (
+            <span className="text-[12px] text-indigo-500">📌</span>
+          )}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 p-3">
         <CardBody record={record} />
       </div>
+
+      {active && (
+        <div className="absolute inset-x-0 bottom-0 h-1 rounded-b-2xl bg-accent/60" />
+      )}
     </div>
   )
 })

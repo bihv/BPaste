@@ -9,11 +9,16 @@ const WINDOW_HEIGHT = 360
 const HOTKEY = 'CommandOrControl+Shift+V'
 
 let mainWindow: BrowserWindow | null = null
+let settingsWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let previousAppBundleId: string | null = null
 
 function getWindow(): BrowserWindow | null {
   return mainWindow
+}
+
+function getSettingsWindow(): BrowserWindow | null {
+  return settingsWindow
 }
 
 function getPreviousAppBundleId(): string | null {
@@ -116,17 +121,66 @@ function createTray(): void {
   const menu = Menu.buildFromTemplate([
     { label: 'Hiện BPaste', click: toggleWindow },
     { type: 'separator' },
+    { label: 'Cài đặt...', click: openSettingsWindow },
+    { type: 'separator' },
     { label: 'Thoát', click: () => app.quit() }
   ])
   tray.setContextMenu(menu)
   tray.on('click', toggleWindow)
 }
 
+function openSettingsWindow(): void {
+  console.log('[Main] openSettingsWindow called, current state:', settingsWindow ? 'exists' : 'null')
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    console.log('[Main] Settings window exists, focusing...')
+    settingsWindow.focus()
+    return
+  }
+
+  console.log('[Main] Creating new settings window...')
+  settingsWindow = new BrowserWindow({
+    width: 750,
+    height: 500,
+    minWidth: 750,
+    minHeight: 500,
+    maxWidth: 750,
+    maxHeight: 500,
+    show: true,
+    frame: true,
+    resizable: false,
+    minimizable: true,
+    maximizable: false,
+    title: 'BPaste Settings',
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  })
+
+  console.log('[Main] Settings window created, loading URL...')
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    settingsWindow.loadURL(process.env['ELECTRON_RENDERER_URL'] + '#/settings')
+  } else {
+    settingsWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/settings' })
+  }
+
+  settingsWindow.webContents.on('did-finish-load', () => {
+    console.log('[Main] Settings window finished loading')
+  })
+
+  settingsWindow.on('closed', () => {
+    console.log('[Main] Settings window closed')
+    settingsWindow = null
+  })
+}
+
 app.whenReady().then(() => {
   initDatabase()
   createWindow()
   createTray()
-  registerIpcHandlers(getWindow, getPreviousAppBundleId)
+  registerIpcHandlers(getWindow, getSettingsWindow, openSettingsWindow, getPreviousAppBundleId)
 
   startWatcher((record, isNew) => {
     mainWindow?.webContents.send('clips:changed', { record, isNew })

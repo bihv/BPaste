@@ -38,35 +38,39 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center vibrancy-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center animate-fade vibrancy-overlay"
       onClick={handleBackdropClick}
     >
-      <div className="flex max-h-[90vh] w-[600px] flex-col rounded-2xl vibrancy-modal">
-        <div className="flex items-center justify-between border-b border-theme-default px-5 py-4">
-          <h2 className="text-sm font-semibold text-theme-primary">Chỉnh sửa</h2>
+      <div className="flex max-h-[85vh] w-[580px] flex-col rounded-xl animate-scale vibrancy-modal">
+        <div className="flex items-center justify-between border-b border-black/[0.04] dark:border-white/[0.04] px-4 py-3">
+          <h2 className="text-[13px] font-semibold text-theme-primary">Chỉnh sửa</h2>
           <div className="flex items-center gap-1">
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
               title="Hủy"
             >
-              ✕
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
             {!isImage && (
               <button
                 onClick={handleSave}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-white hover:opacity-90"
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
                 title="Lưu"
               >
-                ✓
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-5">
+        <div className="flex-1 overflow-auto p-4">
           {isImage ? (
-            <p className="text-sm text-theme-secondary">Không thể chỉnh sửa hình ảnh.</p>
+            <p className="text-[13px] text-theme-secondary">Không thể chỉnh sửa hình ảnh.</p>
           ) : isRichText ? (
             <RichTextEditor
               value={content}
@@ -77,7 +81,7 @@ const EditModal = memo(function EditModal({ record, onSave, onClose }: Props): J
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="h-full min-h-[300px] w-full rounded-lg border border-theme-default bg-theme-card px-3 py-2 text-sm text-theme-primary focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-full min-h-[280px] w-full rounded-lg border border-black/[0.06] dark:border-white/[0.06] bg-hover px-3 py-2 text-[13px] text-theme-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
               autoFocus
             />
           )}

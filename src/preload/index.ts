@@ -70,7 +70,8 @@ const api = {
   },
   getSetting: (key: string): Promise<string | null> => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: string): Promise<void> => ipcRenderer.invoke('settings:set', key, value),
-  getAllSettings: (): Promise<Record<string, string>> => ipcRenderer.invoke('settings:all')
+  getAllSettings: (): Promise<Record<string, string>> => ipcRenderer.invoke('settings:all'),
+  openSettingsWindow: (): Promise<void> => ipcRenderer.invoke('settings:openWindow')
 }
 
 contextBridge.exposeInMainWorld('bpaste', api)

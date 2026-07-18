@@ -91,14 +91,14 @@ export default function Sidebar({
 
   if (collapsed) {
     return (
-      <div className="flex h-full w-12 flex-col items-center border-r border-theme-default py-2 vibrancy-sidebar">
+      <div className="flex h-full w-11 flex-col items-center border-r border-black/[0.04] dark:border-white/[0.04] py-2.5 vibrancy-sidebar">
         <button
           onClick={onToggleCollapse}
           title="Mở rộng sidebar"
-          className="flex h-8 w-8 items-center justify-center rounded text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
@@ -106,40 +106,42 @@ export default function Sidebar({
   }
 
   return (
-    <div className="flex h-full w-48 flex-col border-r border-theme-default vibrancy-sidebar">
-      <div className="flex items-center justify-between border-b border-theme-default px-3 py-2">
-        <span className="text-xs font-medium text-theme-secondary">Pinboards</span>
-        <div className="flex items-center gap-1">
+    <div className="flex h-full w-44 flex-col border-r border-black/[0.04] dark:border-white/[0.04] vibrancy-sidebar">
+      <div className="flex items-center justify-between border-b border-black/[0.04] dark:border-white/[0.04] px-3 py-2">
+        <span className="text-[11px] font-medium text-theme-tertiary uppercase tracking-wide">Pinboards</span>
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => setIsCreating(true)}
-            className="flex h-5 w-5 items-center justify-center rounded text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
             title="Tạo pinboard mới"
           >
-            +
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
           </button>
           <button
             onClick={onToggleCollapse}
             title="Thu gọn sidebar"
-            className="flex h-5 w-5 items-center justify-center rounded text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
           >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-1">
+      <div className="flex-1 overflow-y-auto py-1.5">
         <button
           onClick={() => onSelect(null)}
-          className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm ${
+          className={`flex w-full items-center gap-2 px-3 py-1.5 text-[13px] rounded-md mx-1 transition-colors ${
             selectedId === null
-              ? 'bg-accent-light text-accent'
-              : 'text-theme-secondary hover:bg-black/5'
+              ? 'bg-accent-light text-accent font-medium'
+              : 'text-theme-secondary hover:bg-hover'
           }`}
         >
           <span
-            className="h-2.5 w-2.5 rounded-full"
+            className="h-2 w-2 rounded-full"
             style={{ backgroundColor: '#94a3b8' }}
           />
           <span>Tất cả</span>
@@ -148,7 +150,7 @@ export default function Sidebar({
         {pinboards.map((pinboard) => (
           <div key={pinboard.id}>
             {editingId === pinboard.id ? (
-              <div className="px-3 py-1.5">
+              <div className="px-3 py-1.5 mx-1">
                 <input
                   type="text"
                   value={newName}
@@ -157,16 +159,16 @@ export default function Sidebar({
                     if (e.key === 'Enter') void handleUpdate()
                     if (e.key === 'Escape') closeMenus()
                   }}
-                  className="mb-1 w-full rounded border border-theme-default bg-transparent px-2 py-0.5 text-sm text-theme-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="mb-1.5 w-full rounded-md border border-black/[0.08] dark:border-white/[0.08] bg-transparent px-2 py-1 text-[13px] text-theme-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
                   autoFocus
                 />
-                <div className="mb-1 flex flex-wrap gap-1">
+                <div className="mb-1.5 flex flex-wrap gap-1">
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
                       onClick={() => setNewColor(color)}
-                      className={`h-5 w-5 rounded-full ${
-                        newColor === color ? 'ring-2 ring-offset-1 ring-accent' : ''
+                      className={`h-5 w-5 rounded-full transition-transform ${
+                        newColor === color ? 'ring-2 ring-accent ring-offset-1 dark:ring-offset-0 scale-110' : 'hover:scale-110'
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -175,13 +177,13 @@ export default function Sidebar({
                 <div className="flex gap-1">
                   <button
                     onClick={() => void handleUpdate()}
-                    className="flex-1 rounded bg-accent py-0.5 text-xs text-white hover:opacity-90"
+                    className="flex-1 rounded-md bg-accent py-1 text-[12px] font-medium text-white hover:bg-accent-hover transition-colors"
                   >
                     Lưu
                   </button>
                   <button
                     onClick={closeMenus}
-                    className="flex-1 rounded bg-theme-card py-0.5 text-xs text-theme-secondary hover:opacity-80"
+                    className="flex-1 rounded-md bg-hover py-1 text-[12px] font-medium text-theme-secondary hover:bg-active transition-colors"
                   >
                     Hủy
                   </button>
@@ -191,14 +193,14 @@ export default function Sidebar({
               <button
                 onClick={() => onSelect(pinboard.id)}
                 onContextMenu={handleContextMenu(pinboard)}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm ${
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-[13px] rounded-md mx-1 transition-colors ${
                   selectedId === pinboard.id
-                    ? 'bg-accent-light text-accent'
-                    : 'text-theme-secondary hover:bg-black/5'
+                    ? 'bg-accent-light text-accent font-medium'
+                    : 'text-theme-secondary hover:bg-hover'
                 }`}
               >
                 <span
-                  className="h-2.5 w-2.5 rounded-full"
+                  className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: pinboard.color }}
                 />
                 <span className="flex-1 truncate text-left">{pinboard.name}</span>
@@ -208,7 +210,7 @@ export default function Sidebar({
         ))}
 
         {isCreating && (
-          <div className="px-3 py-1.5">
+          <div className="px-3 py-1.5 mx-1">
             <input
               type="text"
               value={newName}
@@ -218,16 +220,16 @@ export default function Sidebar({
                 if (e.key === 'Escape') closeMenus()
               }}
               placeholder="Tên pinboard"
-              className="mb-1 w-full rounded border border-theme-default bg-transparent px-2 py-0.5 text-sm text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
+              className="mb-1.5 w-full rounded-md border border-black/[0.08] dark:border-white/[0.08] bg-transparent px-2 py-1 text-[13px] text-theme-primary placeholder:text-theme-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30"
               autoFocus
             />
-            <div className="mb-1 flex flex-wrap gap-1">
+            <div className="mb-1.5 flex flex-wrap gap-1">
               {PRESET_COLORS.map((color) => (
                 <button
                   key={color}
                   onClick={() => setNewColor(color)}
-                  className={`h-5 w-5 rounded-full ${
-                    newColor === color ? 'ring-2 ring-offset-1 ring-accent' : ''
+                  className={`h-5 w-5 rounded-full transition-transform ${
+                    newColor === color ? 'ring-2 ring-accent ring-offset-1 dark:ring-offset-0 scale-110' : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: color }}
                 />
@@ -236,13 +238,13 @@ export default function Sidebar({
             <div className="flex gap-1">
               <button
                 onClick={() => void handleCreate()}
-                className="flex-1 rounded bg-accent py-0.5 text-xs text-white hover:opacity-90"
+                className="flex-1 rounded-md bg-accent py-1 text-[12px] font-medium text-white hover:bg-accent-hover transition-colors"
               >
                 Tạo
               </button>
               <button
                 onClick={closeMenus}
-                className="flex-1 rounded bg-theme-card py-0.5 text-xs text-theme-secondary hover:opacity-80"
+                className="flex-1 rounded-md bg-hover py-1 text-[12px] font-medium text-theme-secondary hover:bg-active transition-colors"
               >
                 Hủy
               </button>

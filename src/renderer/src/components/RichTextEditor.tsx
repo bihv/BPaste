@@ -36,8 +36,8 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
   }, [handleInput])
 
   return (
-    <div className="rounded-lg border border-theme-default overflow-hidden">
-      <div className="flex items-center gap-0.5 border-b border-theme-default bg-theme-card px-2 py-1.5">
+    <div className="rounded-lg border border-black/[0.06] dark:border-white/[0.06] overflow-hidden bg-hover">
+      <div className="flex items-center gap-0.5 border-b border-black/[0.04] dark:border-white/[0.04] bg-white/[0.03] dark:bg-white/[0.02] px-1.5 py-1">
         {TOOLBAR_BUTTONS.map(({ cmd, label, title }) => (
           <button
             key={cmd}
@@ -47,12 +47,12 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
               execCommand(cmd)
             }}
             title={title}
-            className="flex h-7 w-8 items-center justify-center rounded text-sm font-medium text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+            className="flex h-6 w-7 items-center justify-center rounded text-[12px] font-medium text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
           >
             {label}
           </button>
         ))}
-        <div className="mx-1 h-5 w-px bg-theme-default" />
+        <div className="mx-1 h-4 w-px bg-black/[0.06] dark:bg-white/[0.06]" />
         <button
           type="button"
           onMouseDown={(e) => {
@@ -60,7 +60,7 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
             execCommand('removeFormat')
           }}
           title="Xóa định dạng"
-          className="flex h-7 items-center justify-center rounded px-2 text-xs font-medium text-theme-tertiary hover:bg-black/5 hover:text-theme-secondary"
+          className="flex h-6 items-center justify-center rounded px-1.5 text-[11px] font-medium text-theme-tertiary hover:bg-hover hover:text-theme-secondary transition-colors"
         >
           Clear
         </button>
@@ -71,7 +71,7 @@ const RichTextEditor = memo(function RichTextEditor({ value, onChange, placehold
         suppressContentEditableWarning
         onInput={handleInput}
         data-placeholder={placeholder}
-        className="min-h-[120px] w-full px-3 py-2.5 text-sm text-theme-primary outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-theme-tertiary"
+        className="min-h-[120px] w-full px-3 py-2.5 text-[13px] text-theme-primary outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-theme-tertiary"
         style={{ lineHeight: 1.6 }}
       />
     </div>

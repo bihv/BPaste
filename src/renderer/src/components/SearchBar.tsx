@@ -7,10 +7,10 @@ interface Props {
 
 export function SearchBar({ value, onChange }: Props): JSX.Element {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-theme-card px-3 py-1.5 ring-1 ring-black/5 focus-within:ring-accent">
+    <div className="flex items-center gap-2 rounded-lg bg-hover px-3 py-1.5 transition-all duration-150 focus-within:bg-active focus-within:ring-1 focus-within:ring-accent/30">
       <svg
-        width="15"
-        height="15"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -27,7 +27,7 @@ export function SearchBar({ value, onChange }: Props): JSX.Element {
         spellCheck={false}
         placeholder="Tìm kiếm..."
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="w-48 bg-transparent text-sm text-theme-primary placeholder:text-theme-tertiary outline-none"
+        className="w-44 bg-transparent text-[13px] text-theme-primary placeholder:text-theme-tertiary outline-none"
       />
     </div>
   )

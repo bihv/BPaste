@@ -11,6 +11,8 @@ import SettingsModal from './components/SettingsModal'
 import { ThemeProvider } from './contexts/ThemeContext'
 import type { ClipRecord, Pinboard } from './types'
 
+const isSettingsWindow = window.location.hash === '#/settings'
+
 export default function App(): JSX.Element {
   const {
     filtered,
@@ -40,7 +42,6 @@ export default function App(): JSX.Element {
   const [previewRecord, setPreviewRecord] = useState<ClipRecord | null>(null)
   const [editRecord, setEditRecord] = useState<ClipRecord | null>(null)
   const [editingPinboardId, setEditingPinboardId] = useState<number | null>(null)
-  const [showSettings, setShowSettings] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   useEffect(() => {
@@ -83,6 +84,9 @@ export default function App(): JSX.Element {
       if (data.action === 'rename') {
         handleStartEditingPinboard(data.pinboard)
       } else if (data.action === 'delete') {
+        if (selectedPinboardId === data.pinboard.id) {
+          setSelectedPinboard(null)
+        }
         void deletePinboard(data.pinboard.id)
       }
     })
@@ -91,7 +95,7 @@ export default function App(): JSX.Element {
       unsubClip()
       unsubPinboard()
     }
-  }, [pastePlain, togglePin, remove, addToPinboard, deletePinboard, handleStartEditingPinboard])
+  }, [pastePlain, togglePin, remove, addToPinboard, deletePinboard, handleStartEditingPinboard, selectedPinboardId, setSelectedPinboard])
 
   const clampIndex = useCallback(
     (index: number) => Math.max(0, Math.min(index, filtered.length - 1)),
@@ -154,34 +158,48 @@ export default function App(): JSX.Element {
     setEditingPinboardId(null)
   }, [])
 
-  const handleDeletePinboard = useCallback(async (id: number) => {
-    await deletePinboard(id)
-    if (selectedPinboardId === id) {
-      setSelectedPinboard(null)
-    }
-  }, [deletePinboard, selectedPinboardId, setSelectedPinboard])
+  // Settings-only window view
+  if (isSettingsWindow) {
+    return (
+      <ThemeProvider>
+        <div className="h-screen w-screen bg-theme-bg">
+          <SettingsModal />
+        </div>
+      </ThemeProvider>
+    )
+  }
 
   return (
     <ThemeProvider>
       <div className="flex h-screen w-screen flex-col bg-paste-bg animate-rise vibrancy-bg">
-        <header className="flex items-center justify-between border-b border-theme-default px-4 py-3 vibrancy-header">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold tracking-wide text-theme-primary">BPaste</span>
+        <header className="flex items-center justify-between px-4 py-2.5 vibrancy-header">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold tracking-tight text-theme-primary">BPaste</span>
             <TypeFilter value={filter} onChange={setFilter} />
           </div>
           <div className="flex items-center gap-2">
             <SearchBar value={query} onChange={setQuery} />
             <button
-              onClick={() => setShowSettings(true)}
+              onClick={() => {
+                console.log('[Renderer] Settings button clicked')
+                void window.bpaste.openSettingsWindow().then(() => {
+                  console.log('[Renderer] openSettingsWindow promise resolved')
+                }).catch((err) => {
+                  console.error('[Renderer] openSettingsWindow error:', err)
+                })
+              }}
               title="Cài đặt"
-              className="rounded-lg p-1.5 text-theme-secondary hover:bg-black/5 hover:text-theme-primary"
+              className="rounded-lg p-1.5 text-theme-tertiary hover:bg-hover hover:text-theme-primary transition-colors"
             >
-              ⚙️
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 0 .238-.912c.07-.23.07-.476 0-.78-.07-.197-.11-.394-.19-.592a1.125 1.125 0 0 1 .46-1.028l1.276-1.276a1.125 1.125 0 0 1 1.37-.49l1.216.456c.355.133.73.082.985-.126.074-.06.15-.124.22-.181.332-.183.583-.496.645-.87l.214-1.281c.088-.542-.56-.94-1.108-.94h-2.594c-.55 0-1.019.398-1.11.94l-.213 1.281c-.063.374-.312.686-.644.87a4.34 4.34 0 0 1-.22.127c-.324.195-.72.257-1.074.124l-1.217-.456a1.125 1.125 0 0 0-1.37.49l-1.297 2.247a1.125 1.125 0 0 1-1.43.26l-1.003-.827a1.125 1.125 0 0 0-.492-.59l-1.192-.454-.007-.001-.003-.001-.002-.001a1.125 1.125 0 0 1 .26-1.43l1.275-1.275a1.125 1.125 0 0 0-1.37-.49l-1.216.456c-.355.133-.73.082-.985-.126a3.15 3.15 0 0 1-.22-.181c-.332-.183-.583-.495-.645-.87l-.214-1.281Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
             </button>
             <button
               onClick={() => void clearAll()}
               title="Xóa tất cả (giữ mục đã ghim)"
-              className="rounded-lg px-2.5 py-1.5 text-xs text-theme-secondary ring-1 ring-black/10 hover:bg-black/5 hover:text-theme-primary"
+              className="rounded-lg px-2.5 py-1 text-xs font-medium text-theme-secondary bg-hover hover:bg-active hover:text-theme-primary transition-colors"
             >
               Xóa hết
             </button>
@@ -226,17 +244,13 @@ export default function App(): JSX.Element {
           />
         )}
 
-        {showSettings && (
-          <SettingsModal onClose={() => setShowSettings(false)} />
-        )}
-
-        <footer className="flex items-center justify-center gap-4 border-t border-theme-default px-4 py-1.5 text-[11px] text-theme-tertiary vibrancy-footer">
-          <span>← → di chuyển</span>
-          <span>Enter dán</span>
-          <span>P xem trước</span>
-          <span>E sửa</span>
-          <span>Ctrl+Delete xóa</span>
-          <span>Esc đóng</span>
+        <footer className="flex items-center justify-center gap-6 border-t border-black/[0.04] dark:border-white/[0.04] px-4 py-1.5 vibrancy-footer">
+          <span className="text-[11px] text-theme-tertiary">← → di chuyển</span>
+          <span className="text-[11px] text-theme-tertiary">Enter dán</span>
+          <span className="text-[11px] text-theme-tertiary">P xem</span>
+          <span className="text-[11px] text-theme-tertiary">E sửa</span>
+          <span className="text-[11px] text-theme-tertiary">Ctrl+Del xóa</span>
+          <span className="text-[11px] text-theme-tertiary">Esc đóng</span>
         </footer>
       </div>
     </ThemeProvider>
