@@ -108,7 +108,6 @@ function simulatePaste(previousAppBundleId?: string | null): void {
 
 export function registerIpcHandlers(
   getWindow: () => BrowserWindow | null,
-  getSettingsWindow: () => BrowserWindow | null,
   openSettingsWindow: () => void,
   getPreviousAppBundleId: () => string | null = () => null
 ): void {

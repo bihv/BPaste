@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import { execSync } from 'child_process'
 import { join } from 'path'
 import { mkdirSync, existsSync } from 'fs'

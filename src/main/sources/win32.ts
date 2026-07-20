@@ -1,6 +1,6 @@
 import { execSync } from 'child_process'
 import { join } from 'path'
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { mkdirSync } from 'fs'
 
 interface Win32AppInfo {
   name: string
@@ -39,29 +39,6 @@ function getFrontmostApp(): Win32AppInfo | null {
 
     if (result) {
       return { name: result, iconPath: null }
-    }
-  } catch {
-    return null
-  }
-
-  return null
-}
-
-function findExePath(processName: string): string | null {
-  try {
-    const script = `
-      $proc = Get-Process -Name "${processName}" -ErrorAction SilentlyContinue | Select-Object -First 1
-      if ($proc) {
-        Write-Output $proc.Path
-      }
-    `
-    const result = execSync(`powershell -Command "${script.replace(/"/g, '\\"').replace(/\n/g, ' ')}"`, {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'ignore']
-    }).trim()
-
-    if (result && existsSync(result)) {
-      return result
     }
   } catch {
     return null

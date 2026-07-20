@@ -1,11 +1,6 @@
 import { execSync } from 'child_process'
 import { join } from 'path'
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'fs'
-
-interface LinuxAppInfo {
-  name: string
-  iconPath: string | null
-}
+import { existsSync, readFileSync, mkdirSync } from 'fs'
 
 function getFrontmostApp(): string | null {
   try {

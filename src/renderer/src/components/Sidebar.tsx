@@ -22,7 +22,6 @@ interface Props {
   onCreate: (name: string, color: string) => Promise<void>
   onUpdate: (id: number, name: string, color: string) => Promise<void>
   onRename: (pinboard: Pinboard) => void
-  onStartEditing: (pinboard: Pinboard) => void
   editingPinboardId: number | null
   onEditingComplete: () => void
   collapsed: boolean
@@ -36,7 +35,6 @@ export default function Sidebar({
   onCreate,
   onUpdate,
   onRename,
-  onStartEditing,
   editingPinboardId,
   onEditingComplete,
   collapsed,

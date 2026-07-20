@@ -214,7 +214,6 @@ export default function App(): JSX.Element {
             onCreate={handleCreatePinboard}
             onUpdate={handleUpdatePinboard}
             onRename={handleRenamePinboard}
-            onStartEditing={handleStartEditingPinboard}
             editingPinboardId={editingPinboardId}
             onEditingComplete={handleEditingComplete}
             collapsed={sidebarCollapsed}

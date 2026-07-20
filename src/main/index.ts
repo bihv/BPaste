@@ -17,10 +17,6 @@ function getWindow(): BrowserWindow | null {
   return mainWindow
 }
 
-function getSettingsWindow(): BrowserWindow | null {
-  return settingsWindow
-}
-
 function getPreviousAppBundleId(): string | null {
   return previousAppBundleId
 }
@@ -64,7 +60,7 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: true
     }
   })
 
@@ -155,7 +151,7 @@ function openSettingsWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: true
     }
   })
 
@@ -180,7 +176,7 @@ app.whenReady().then(() => {
   initDatabase()
   createWindow()
   createTray()
-  registerIpcHandlers(getWindow, getSettingsWindow, openSettingsWindow, getPreviousAppBundleId)
+  registerIpcHandlers(getWindow, openSettingsWindow, getPreviousAppBundleId)
 
   startWatcher((record, isNew) => {
     mainWindow?.webContents.send('clips:changed', { record, isNew })
